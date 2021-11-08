@@ -4,6 +4,10 @@
 
 all: README.html STUDENT.html INSTRUCTOR.html server.qcow2 workstation.qcow2
 
+books: README.html STUDENT.html INSTRUCTOR.html
+
+vms: server.qcow2 workstation.qcow2
+
 %.qcow2:
 	virt-builder fedora-34 \
 	--format qcow2 \
