@@ -8,25 +8,25 @@ books: README.html STUDENT.html INSTRUCTOR.html
 
 vms: server.qcow2 workstation.qcow2
 
-%.qcow2:
+%.qcow2: Makefile
 	virt-builder fedora-34 \
 	--format qcow2 \
 	--install bash,git \
 	--root-password password:Funk3nGr00v3n123 \
 	-o $@ \
-	--ssh-inject root:file:/users/lemmy/.ssh/id_ed25519.pub \
+	--ssh-inject root:file:./id_ed25519.pub \
 	--hostname $(basename $@).gitworkshop.local \
 	--firstboot-command 'useradd -m -p "" student ; chage -d 0 student' \
 	--firstboot-command 'localectl set-keymap de'
 
-%.html: $(basename $@).md
+%.html : %.md
 	pandoc \
 	-f markdown \
 	-t html \
 	-o $@ \
 	$(basename $@).md
 
-%.pdf:
+%.pdf : %.md
 	pandoc \
 	-f markdown \
 	-t pdf \
