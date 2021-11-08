@@ -141,3 +141,7 @@ sympy-plots-for-*.tex/
 
 # VM images
 *.qcow2
+
+# Generated books
+*.html
+*.pdf
