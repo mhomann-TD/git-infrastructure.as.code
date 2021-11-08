@@ -1,3 +1,7 @@
+% GIT - Infrastructure as code, Student Workbook
+% Mathias Homann
+% 11-2021
+
 # GIT - Infrastructure as code
 # Student manual
 
@@ -8,13 +12,18 @@ Immer öfter hört man heute den Begriff "Infrastructure as code", aber was bede
 Es ist eigentlich ziemlich simpel: "Infrastructure as code" ist nichts anderes als eine neue Art und Weise, an die Konfiguration
 kompletter IT-Umgebungen heranzugehen.
 Dabei wird so viel wie möglich in Form von Scripten (im weitesten Sinne des Wortes) implementiert. Dieses bringt uns mehrere Vorteile:
+
 * Wiederholbarkeit
+
 * Fehlerfreiheit
+
 * Automatisierbarkeit
 
 Wiederholbarkeit bedeutet, dass man den gleichen Prozess immer wieder verwenden kann, und sich darauf verlassen kann dass der Prozess
 immer gleich abläuft.
+
 Fehlerfreiheit bedeutet, dass ein Prozess, den man ein mal korrekt implementiert hat, durch seine Wiederholbarkeit sicherstellt, dass keine Fehler auftreten.
+
 Automatisierbarkeit ist die Kombination dieser Eigenschaften: Einen Prozess, den ich korrekt und wiederholbar implementiert habe, kann ich mit gutem Gewissen automatisch ablaufen lassen.
 
 ## Idempotenz
