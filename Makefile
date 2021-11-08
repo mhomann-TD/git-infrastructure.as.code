@@ -2,7 +2,7 @@
 ## Makefile for (re)building the course manuals and environment
 ##
 
-all: README.html STUDENT.html INSTRUCTOR.html server.qcow2 workstation.qcow2
+all: books vms
 
 books: README.html STUDENT.html INSTRUCTOR.html
 
@@ -19,7 +19,7 @@ vms: server.qcow2 workstation.qcow2
 	--firstboot-command 'useradd -m -p "" student ; chage -d 0 student' \
 	--firstboot-command 'localectl set-keymap de'
 
-%.html:
+%.html: $(basename $@).md
 	pandoc \
 	-f markdown \
 	-t html \
