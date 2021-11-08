@@ -136,4 +136,8 @@ sympy-plots-for-*.tex/
 *.bak
 *.sav
 
+# Editor backup files
 *~
+
+# VM images
+*.qcow2
