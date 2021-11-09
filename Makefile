@@ -9,7 +9,7 @@ books: README.html STUDENT.html INSTRUCTOR.html
 vms: server.qcow2 workstation.qcow2
 
 %.qcow2: Makefile
-	virt-builder fedora-35 \
+	virt-builder fedora-34 \
 	--update \
 	--format qcow2 \
 	--install bash,git \
