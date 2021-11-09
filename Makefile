@@ -9,15 +9,17 @@ books: README.html STUDENT.html INSTRUCTOR.html
 vms: server.qcow2 workstation.qcow2
 
 %.qcow2: Makefile
-	virt-builder fedora-34 \
+	virt-builder fedora-35 \
+	--update \
 	--format qcow2 \
 	--install bash,git \
 	--root-password password:Funk3nGr00v3n123 \
 	-o $@ \
 	--ssh-inject root:file:./id_ed25519.pub \
-	--hostname $(basename $@).gitworkshop.local \
-	--firstboot-command 'useradd -m -p "" student ; chage -d 0 student' \
-	--firstboot-command 'localectl set-keymap de'
+	--hostname $(basename $@) \
+	--run-command 'useradd -m -p "" student ; chage -d 0 student' \
+	--firstboot-command 'localectl set-keymap de' \
+	--firstboot-command 'touch /firstboot'
 
 %.html : %.md
 	pandoc \
