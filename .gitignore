@@ -150,3 +150,4 @@ sympy-plots-for-*.tex/
 # ignore owncloud sync files
 .owncloud*
 .sync_*
+.sync-*
