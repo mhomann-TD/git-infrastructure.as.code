@@ -146,3 +146,7 @@ sympy-plots-for-*.tex/
 # Generated books
 *.html
 *.pdf
+
+# ignore owncloud sync files
+.owncloud*
+.sync_*
