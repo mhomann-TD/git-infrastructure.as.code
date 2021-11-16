@@ -56,7 +56,6 @@ workstation.qcow2: Makefile
 workstation.vmdk: Makefile
 	virt-builder fedora-35 \
 	--format vmdk \
-	--size 20G \
 	--install "bash,git,@Deepin Desktop" \
 	--root-password password:Funk3nGr00v3n123 \
 	--output $@ \
