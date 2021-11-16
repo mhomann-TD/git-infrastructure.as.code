@@ -76,8 +76,8 @@ Ansible ist eine "Systembeschreibungssprache", das bedeutet ich sage was ich wil
 `ansible -m package -a 'name=httpd state=latest' -bkK server17`
 
 Heisst in umgangssprachlichem Deutsch:
-"Liebes Ansible, ich möchte, dass auf Server17 das Paket 'httpd' in der aktuellsten Version installiert ist. Das musst du als root machen, nach den benötigten Passwörtern sollst du mich fragen."
-Und ob Server17 nun ein RHEL (oder ein Bbkömmling) ist, wo man das entweder mit yum oder dnf macht, oder ein SLES/openSUSE wo der Paketmanager zypper heisst, oder gar ein debian mit apt-get oder aptitude - das ist mir vollkommen Wurst, darum kümmerst sich Ansible selber. Und auch darum, ob das Paket schon drauf ist, oder in einer älteren Version, oder gar nicht, m,acht für diesen Befehl egal.
+"Liebes Ansible, ich möchte, dass auf Server17 das Paket 'httpd' in der aktuellsten Version installiert ist. Dazu brauchst du das `package` modul, das musst du als root machen, nach den benötigten Passwörtern sollst du mich fragen."
+Und ob Server17 nun ein RHEL (oder ein Abkömmling) ist, wo man das entweder mit yum oder dnf macht, oder ein SLES/openSUSE wo der Paketmanager zypper heisst, oder gar ein debian mit apt-get oder aptitude - das ist vollkommen Wurst, darum kümmert sich Ansible selber. Und auch ob das Paket schon drauf ist, oder in einer älteren Version, oder gar nicht, ist für diesen Befehl egal.
 
 Mit ansible kann man (wie eben gesehen) sogenannte "ad-hoc-befehle" ausführen lassen, oder man schreibt sogenannte "playbooks". Ein Playbook ist eine ganze Abfolge von ansible-modulaufrufen, die nacheinander ausgeführt werden.
 
@@ -236,15 +236,34 @@ Mit den bis hier erfolgten Ausführungen sollte jeder in der Lage sein, dieses P
 ## Versionsverwaltung mit git
 
 ### Was ist git
+(versionskontrollsystem - github.org - linux kernel - etc etc etc)
 
 ### Wie benutze ich git
 
+change, stage, commit, push, repeat
+
 ### Lokal vs. Remote
+git init
+git clone
+git pull
+git remote add
 
 ## Datenbankadministration mit ansible am Beispiel von mysql auf Red Hat Linux
 
 ### Welche Ansible-Module braucht man
+user
+package
+mysql
+service
+firewalld
 
 ### Welche Schritte müssen ausgeführt werden
+user anlegen
+pakete installieren
+dienst aktivieren
+firewall öffnen
+datenbank initialisieren
+dbuser anlegen
+db für den dbuser anlegen
 
 ### Lösung
