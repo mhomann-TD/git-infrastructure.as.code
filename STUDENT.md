@@ -278,9 +278,105 @@ Zuletzt kann man alle im lokalen Repository abgelegten Änderungen mit `git push
 
 ## Vorbereitende Aufgaben
 
+### Die Lab-Umgebung
+
+Für jeden Teilnehmer des Workshops stehen zwei separate VMs zur Verfügung, auf denen es einen Benutzer "student" mit dem Passwort "student" gibt. Die VMs haben für alle Teilnehmer die gleichen hostnamen, `server` und `workstation`. Auf der Workstation ist eine graphische Benutzeroberfläche eingerichtet, die ggf. erst an die Sprach- und Tastaturpräferenzen des Benutzers angepasst werden muss. Das Kontrollzentrum des verwendeten DE ist selbsterklärend.
+
 ### ssh key anlegen
 
+Öffne eine Kommandozeile auf der Workstation-VM, und erzeuge einen ssh-key mit dem Befehl `ssh-add`:
+
+```
+[student@workstation ~]$ ssh-keygen -C "Student user für git and ansible workshop" 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/student/.ssh/id_rsa): 
+Created directory '/home/student/.ssh'.
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/student/.ssh/id_rsa
+Your public key has been saved in /home/student/.ssh/id_rsa.pub
+The key fingerprint is:
+SHA256:yd0MxzzCO1Gu5EhCyufgze1WXmCHpcxIvfqGFn2Emd4 Student user für git and ansible workshop
+The key's randomart image is:
++---[RSA 3072]----+
+|      . ..  o    |
+|   . o . =.O     |
+|    + o o &=B    |
+|   . * = B=%..   |
+|    . + S+Bo+    |
+|       .ooooE    |
+|        o+..     |
+|       .o o      |
+|       . .       |
++----[SHA256]-----+
+```
+
 ### ssh key auf server und workstation kopieren
+Diesen Key müssen wir nun auf server und workstation für die benutzer `root` und `student` freischalten.
+Zuerst für den student:
+```
+[student@workstation ~]$ ssh-copy-id student@workstation
+The authenticity of host 'workstation (fe80::5054:ff:fe80:d2dc%enp1s0)' can't be established.
+ED25519 key fingerprint is SHA256:nlhHjxx85kikhzW6JilOG8hUOGktByu/Dwu3v2nmnyA.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 2 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+student@workstation's password: 
+
+Number of key(s) added: 2
+
+Now try logging into the machine, with:   "ssh 'student@workstation'"
+and check to make sure that only the key(s) you wanted were added.
+
+[student@workstation ~]$ ssh-copy-id student@server
+The authenticity of host 'server (192.168.238.174)' can't be established.
+ED25519 key fingerprint is SHA256:8BPQfyhV3O+YR2MrXcSp1+OfbDS+cprzns+zge5kpYc.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 2 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+student@server's password: 
+
+Number of key(s) added: 2
+
+Now try logging into the machine, with:   "ssh 'student@server'"
+and check to make sure that only the key(s) you wanted were added.
+```
+Um den key auch für `root` freizuschalten, müssen wir uns auf dem betreffenden System erst einmal als student anmelden, und danach den bereits für `student` freigeschalteten key auch für root freischalten:
+```
+[student@workstation ~]$ sudo -i
+[sudo] Passwort für student: 
+[root@workstation ~]# mkdir -p ~root/.ssh
+[root@workstation ~]# cat ~student/.ssh/authorized_keys >> ~root/.ssh/authorized_keys
+[root@workstation ~]# 
+Abgemeldet
+[student@workstation ~]$ ssh root@workstation
+Last login: Mon Nov 29 03:44:45 2021 from fe80::5054:ff:fe80:d2dc%enp1s0
+[root@workstation ~]# 
+Abgemeldet
+Connection to workstation closed.
+```
+
+Und noch mal das gleiche auf dem `server`:
+```
+[student@workstation ~]$ ssh student@server
+Last login: Mon Nov 29 03:53:19 2021 from 192.168.238.175
+[student@server ~]$ sudo -i
+[sudo] Passwort für student: 
+[root@server ~]# mkdir -p ~root/.ssh
+[root@server ~]# cat ~student/.ssh/authorized_keys >> ~root/.ssh/authorized_keys
+[root@server ~]# 
+Abgemeldet
+[student@server ~]$ 
+Abgemeldet
+Connection to server closed.
+[student@workstation ~]$ ssh root@server
+Last login: Mon Nov 29 03:50:26 2021 from 192.168.238.175
+[root@server ~]# 
+Abgemeldet
+Connection to server closed.
+```
 
 ### git repo auf server anlegen
 
