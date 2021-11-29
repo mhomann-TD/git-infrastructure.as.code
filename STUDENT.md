@@ -235,18 +235,61 @@ Mit den bis hier erfolgten Ausführungen sollte jeder in der Lage sein, dieses P
 
 ## Versionsverwaltung mit git
 
+Eine wie auch immer geartete Versionsverwaltung sollte die folgenden Merkmale aufweisen:
+
+* Jede Änderung wird mit einer Logmessage gespeichert
+* Dateien können wieder auf frühere Versionen zurückgesetzt werden
+* Die Unterschiede zwischen verschiedenen Versionen können übersichtlich dargestellt werden
+* Bei jeder Änderung wird Uhrzeit, Datum, und der Accont der die Änderung gemacht hat gespeichert.
+* Viele verschiedene Nutzer können gleichzeitig am gleichen Projekt arbeiten, wobei Konflikte die entstehen wenn mehrere Nutzer die gleiche Datei ändern abgefangen bzw. sauber zusammengeführt werden.
+* Es gibt die Möglichkeit das Versionskontrollsystem über sog. `hooks` in den Workflow der Softwareentwicklung zu integrieren, so kann z.B. das Erstellen von neuen Containerimages automatisiert werden (gut zu sehen auf dockerhub für zahlende Accounts, oder auf quay.io)
+
+
+
 ### Was ist git
-(versionskontrollsystem - github.org - linux kernel - etc etc etc)
+`git` ist eines der verbretitetesten Versionskontrollsysteme dieser Tage. Das kommt wahrscheinlich nicht zuletzt daher, dass einerseits der Linux-Kernel in einem GIT-repository gepflegt wird, und andererseits unter `https://github.com` ein großer öffentlicher GIT-server für jeden der es nutzen will zur Verfügung gestellt wird.
+
+Git arbeitet mit bis zu vier versxchiedenen Arbeitsbereichen.
+ * central repository
+ * local repository
+ * staging 
+ * working tree
+
+Das "central repository" liegt üblicherweise auf einem zentralen Server. Das kann der bereits erwähnte Dienst github.com sein, man kann aber auch sehr einfach im lokalen Netz einen eigenen zentralen git server aufsetzen, wie wir noch sehen werden. Dieses "central repository" bezeichnet man gerne als den **upstream** eines Projektes.
+
+Das "local repository" ist die lokal ausgecheckte Kopie eines upstreams.
+
+Innerhalb des "local repositories" gibt es zwei Bereiche: die "staging area" in die alle Änderungen eingetragen sind, die **noch nicht committed** sind, und den "working tree", d.H. die regulären Dateien im Dateisystem.
 
 ### Wie benutze ich git
 
-change, stage, commit, push, repeat
+Um mit git zu arbeiten, folge ich einem einfachen Zyklus:
+**change, stage, commit, push, repeat**
 
-### Lokal vs. Remote
-git init
-git clone
-git pull
-git remote add
+Zuerst wird ein repository angelegt. Das geschieht entweder lokal oder auf einem zentralen server mit `git init`. Dabei werden auf einem zentralen server noch die parameter `--bare --shared=true` angegeben.
+
+Alternativ dazu kann man auch ein bereits existierendes Repository von einem zentralen server kopieren ("clonen"): `git clone REPOURL`
+
+Nun macht man Änderungen. Wenn man einen Zwischenstand im Repository ablegen will, fügt man die geänderten Dateien mit `git add DATEINAME` zum staging-Bereich hinzu (Dies gilt auch für neuangelegte Dateien).
+
+Um den im staging abgelegten Stand ins Repository zu schreiben, verwendet man `git commit`, wobei die commit-message mit `-m "message"` gleich übergeben werden kann.
+
+Zuletzt kann man alle im lokalen Repository abgelegten Änderungen mit `git push` ins zentrale Repository hochladen.
+
+## Vorbereitende Aufgaben
+
+### ssh key anlegen
+
+### ssh key auf server und workstation kopieren
+
+### git repo auf server anlegen
+
+### git repo clonen
+
+### ansible.cfg und inventory anlegen
+
+### ansible.cfg und inventory ins repo pushen
+
 
 ## Datenbankadministration mit ansible am Beispiel von mysql auf Red Hat Linux
 
