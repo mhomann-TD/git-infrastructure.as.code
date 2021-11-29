@@ -379,13 +379,183 @@ Connection to server closed.
 ```
 
 ### git repo auf server anlegen
+Jetzt können wir auf dem server als der student-user ein gemeinsam genutztes git repository anlegen:
+```
+[student@workstation ~]$ ssh student@server
+Last login: Mon Nov 29 03:53:22 2021 from 192.168.238.175
+[student@server ~]$ mkdir ansible-mysql
+[student@server ~]$ cd ansible-mysql/
+[student@server ansible-mysql]$ git init --bare --shared=true .
+Hinweis: Als Name für den initialen Branch wurde 'master' benutzt. Dieser
+Hinweis: Standard-Branchname kann sich ändern. Um den Namen des initialen Branches
+Hinweis: zu konfigurieren, der in allen neuen Repositories verwendet werden soll und
+Hinweis: um diese Warnung zu unterdrücken, führen Sie aus:
+Hinweis: 
+Hinweis:        git config --global init.defaultBranch <Name>
+Hinweis: 
+Hinweis: Häufig gewählte Namen statt 'master' sind 'main', 'trunk' und
+Hinweis: 'development'. Der gerade erstellte Branch kann mit diesem Befehl
+Hinweis: umbenannt werden:
+Hinweis: 
+Hinweis:        git branch -m <Name>
+Leeres verteiltes Git-Repository in /home/student/ansible-mysql/ initialisiert
+[student@server ansible-mysql]$ 
+Abgemeldet
+Connection to server closed.
+```
 
 ### git repo clonen
+Dieses repository clonen wir auf die Workstation:
+```
+[student@workstation ~]$ git clone git+ssh://student@server/home/student/ansible-mysql
+Klone nach 'ansible-mysql' ...
+warning: Sie scheinen ein leeres Repository geklont zu haben.
+[student@workstation ~]$ cd ansible-mysql/
+[student@workstation ansible-mysql]$ ls -la
+insgesamt 4
+drwxr-xr-x.  3 student student   18 29. Nov 03:57 .
+drwx------. 16 student student 4096 29. Nov 03:57 ..
+drwxr-xr-x.  7 student student  119 29. Nov 03:57 .git
+```
 
 ### ansible.cfg und inventory anlegen
+Jetzt können wir eine Konfigurationsdatei und ein Inventory für ansible anlegen:
 
+```
+[student@workstation ~]$ cd ~/ansible-mysql/
+[student@workstation ansible-mysql]$ vim ansible.cfg
+[student@workstation ansible-mysql]$ cat ansible.cfg 
+[defaults]
+inventory = ./inventory/
+remote-user = student
+
+[privilege_escalation]
+become = False
+become_method = sudo
+become_user = root
+become_ask_pass = False
+
+```
+```
+[student@workstation ansible-mysql]$ mkdir ./inventory/
+[student@workstation ansible-mysql]$ vim ./inventory/000-hosts
+[student@workstation ansible-mysql]$ cat ./inventory/000-hosts 
+server
+workstation
+```
+### ein erster Test
+Um zu testen ob das alles in Ordnung ist, können wir ein ansible "ad hoc"-Kommando verwenden, aber erst mal muss ansible überhaupt installiert werden:
+
+```
+[student@workstation ansible-mysql]$ sudo dnf install ansible
+[sudo] Passwort für student: 
+Letzte Prüfung auf abgelaufene Metadaten: vor 0:14:40 am Mo 29 Nov 2021 03:48:07 EST.
+Abhängigkeiten sind aufgelöst.
+=============================================================================================================================================
+ Package                                   Architecture               Version                              Repository                   Size
+=============================================================================================================================================
+Installieren:
+ ansible                                   noarch                     2.9.27-1.fc35                        updates                      15 M
+Abhängigkeiten werden installiert:
+ python3-babel                             noarch                     2.9.1-4.fc35                         fedora                      5.8 M
+ python3-bcrypt                            x86_64                     3.2.0-1.fc35                         fedora                       43 k
+ python3-cryptography                      x86_64                     3.4.7-5.fc35                         fedora                      695 k
+ python3-jinja2                            noarch                     3.0.1-2.fc35                         fedora                      529 k
+ python3-jmespath                          noarch                     0.10.0-4.fc35                        fedora                       46 k
+ python3-markupsafe                        x86_64                     2.0.0-2.fc35                         fedora                       27 k
+ python3-ntlm-auth                         noarch                     1.5.0-4.fc35                         fedora                       53 k
+ python3-pynacl                            x86_64                     1.4.0-4.fc35                         fedora                      108 k
+ python3-pytz                              noarch                     2021.3-1.fc35                        updates                      47 k
+ python3-requests_ntlm                     noarch                     1.1.0-16.fc35                        fedora                       18 k
+ python3-xmltodict                         noarch                     0.12.0-13.fc35                       fedora                       22 k
+ sshpass                                   x86_64                     1.09-2.fc35                          fedora                       27 k
+Schwache Abhängigkeiten werden installiert:
+ python3-paramiko                          noarch                     2.7.2-6.fc35                         fedora                      288 k
+ python3-pyasn1                            noarch                     0.4.8-7.fc35                         fedora                      134 k
+ python3-winrm                             noarch                     0.4.1-4.fc35                         fedora                       80 k
+
+Transaktionsübersicht
+=============================================================================================================================================
+Installieren  16 Pakete
+
+Gesamte Downloadgröße: 23 M
+Installationsgröße: 133 M
+Ist dies in Ordnung? [j/N]: j
+```
+
+Hier mit "j" antworten und ein bisserl abwarten.
+
+Jetzt kann  getestet werden:
+```
+[student@workstation ansible-mysql]$ ansible --list-hosts all
+  hosts (2):
+    server
+    workstation
+[student@workstation ansible-mysql]$ ansible -m ping server
+server | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+```
 ### ansible.cfg und inventory ins repo pushen
+Unsere Konfigurationsdatei und das Inventory scheinen ja in Ordnung zu sein, also ab in's Repository damit, aber dafür muss git erst mal für die Logeinträge wissen wer wir sind:
+```
+[student@workstation ansible-mysql]$ git config --global user.email mhomann@redhat.com
+[student@workstation ansible-mysql]$ git config --global user.name "Mathias Homann"
 
+```
+Hier setzt man natürlich den eigenen Namen ein, und die passende Email-Adresse. Wenn man das `--global` weglässt, gilt diese Information nur für die lokale repo-kopie in der man gerade arbeitet.
+
+Jetzt können wir unsere Änderungen speichern:
+```
+[student@workstation ansible-mysql]$ git status
+Auf Branch master
+
+Noch keine Commits
+
+Unversionierte Dateien:
+  (benutzen Sie "git add <Datei>...", um die Änderungen zum Commit vorzumerken)
+        ansible.cfg
+        inventory/
+
+nichts zum Commit vorgemerkt, aber es gibt unversionierte Dateien
+(benutzen Sie "git add" zum Versionieren)
+[student@workstation ansible-mysql]$ git add ansible.cfg 
+[student@workstation ansible-mysql]$ git commit -m "ansible configuration file"
+[master (Root-Commit) 0688255] ansible configuration file
+ 1 file changed, 10 insertions(+)
+ create mode 100644 ansible.cfg
+[student@workstation ansible-mysql]$ git add inventory/
+[student@workstation ansible-mysql]$ git commit -m "ansible inventory"
+[master 29c7e81] ansible inventory
+ 1 file changed, 3 insertions(+)
+ create mode 100644 inventory/000-hosts
+[student@workstation ansible-mysql]$ git push
+Objekte aufzählen: 7, fertig.
+Zähle Objekte: 100% (7/7), fertig.
+Delta-Kompression verwendet bis zu 2 Threads.
+Komprimiere Objekte: 100% (4/4), fertig.
+Schreibe Objekte: 100% (7/7), 658 Bytes | 658.00 KiB/s, fertig.
+Gesamt 7 (Delta 0), Wiederverwendet 0 (Delta 0), Pack wiederverwendet 0
+To git+ssh://server/home/student/ansible-mysql
+ * [new branch]      master -> master
+[student@workstation ansible-mysql]$ git log
+commit 29c7e81c23d582ee7ad8fe0a5665dfe793681907 (HEAD -> master, origin/master)
+Author: Mathias Homann <mhomann@redhat.com>
+Date:   Mon Nov 29 04:15:26 2021 -0500
+
+    ansible inventory
+
+commit 06882552e8bfd56e4e3228dec0bc7131c7dbd6c5
+Author: Mathias Homann <mhomann@redhat.com>
+Date:   Mon Nov 29 04:15:08 2021 -0500
+
+    ansible configuration file
+[student@workstation ansible-mysql]$
+```
 
 ## Datenbankadministration mit ansible am Beispiel von mysql auf Red Hat Linux
 
