@@ -11,7 +11,7 @@ vms: server.qcow2 workstation.qcow2
 vmdk: server.vmdk workstation.vmdk
 
 server.qcow2: Makefile
-	virt-builder fedora-35 \
+	virt-builder centos-8.2 \
 	--format qcow2 \
 	--install "bash,git,qemu-guest-agent,vim" \
 	--root-password password:Funk3nGr00v3n123 \
@@ -30,7 +30,7 @@ server.qcow2: Makefile
 	--selinux-relabel
 
 workstation.qcow2: Makefile
-	virt-builder fedora-35 \
+	virt-builder centos-8.2 \
 	--format qcow2 \
 	--size 20G \
 	--install "bash,git,vim,vim-syntastic-ansible,vim-ansible,@kde-desktop-environment" \
