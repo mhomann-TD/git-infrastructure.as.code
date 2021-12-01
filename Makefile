@@ -28,7 +28,7 @@ server.qcow2: Makefile
 	--firstboot-command 'systemctl reboot' \
 	--selinux-relabel
 
-workstation.qcow2: Makefileglibc-langpack-de
+workstation.qcow2: Makefile
 	virt-builder centos-8.2 \
 	--format qcow2 \
 	--size 20G \
