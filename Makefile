@@ -20,6 +20,7 @@ server.qcow2: Makefile
 	--output $@ \
 	--ssh-inject root:file:./id_ed25519.pub \
 	--hostname $(basename $@) \
+	--timezone "Europe/Berlin" \
 	--run-command 'useradd -m -G wheel -p "" student' \
 	--password student:password:student \
 	--firstboot-command 'localectl set-locale LANG=de_DE.UTF-8' \
@@ -40,6 +41,7 @@ workstation.qcow2: Makefile
 	--output $@ \
 	--ssh-inject root:file:./id_ed25519.pub \
 	--hostname $(basename $@) \
+	--timezone "Europe/Berlin" \
 	--run-command 'useradd -m -G wheel -p "" student' \
 	--password student:password:student \
 	--firstboot-command 'localectl set-locale LANG=de_DE.UTF-8' \
