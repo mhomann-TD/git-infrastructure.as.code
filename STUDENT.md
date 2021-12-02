@@ -177,7 +177,7 @@ Aus dem bis hier gesagten ergeben sich folgende Arbeiten, um einen (neuen) REchn
 2. den Remote-User für `sudo` freischalten
 3. den für Ansible verwendeten ssh-key im Benutzeraccount des ansible-remote-users eintragen.
 
-Und das kann man dann auch schon mit ansible machen:
+Und das kann man dann natürlich mit ansible machen:
 
 ```
 ---
@@ -233,6 +233,15 @@ Damit wird der remote-benutzer angelegt, und als passwort das mit "upassword=" �
 
 Mit den bis hier erfolgten Ausführungen sollte jeder in der Lage sein, dieses Play zu lesen und zu verstehen.
 
+**Die für die Übungen bereitgestellten VMs sind bereits entsprechend vorbereitet.**
+
+### Zugangsdaten der VMs
+
+Der user für den Benutzerzugriff heisst **`student`** mit dem passwort **`student`**
+
+Das Passwort für den Benutzer **`root`** lautet **`Funk3nGr00v3n123`**
+
+
 ## Versionsverwaltung mit git
 
 Eine wie auch immer geartete Versionsverwaltung sollte die folgenden Merkmale aufweisen:
@@ -287,121 +296,72 @@ Für jeden Teilnehmer des Workshops stehen zwei separate VMs zur Verfügung, auf
 Öffne eine Kommandozeile auf der Workstation-VM, und erzeuge einen ssh-key mit dem Befehl `ssh-add`:
 
 ```
-[student@workstation ~]$ ssh-keygen -C "Student user für git and ansible workshop" 
 Generating public/private rsa key pair.
 Enter file in which to save the key (/home/student/.ssh/id_rsa): 
 Created directory '/home/student/.ssh'.
 Enter passphrase (empty for no passphrase): 
 Enter same passphrase again: 
-Your identification has been saved in /home/student/.ssh/id_rsa
-Your public key has been saved in /home/student/.ssh/id_rsa.pub
+Your identification has been saved in /home/student/.ssh/id_rsa.
+Your public key has been saved in /home/student/.ssh/id_rsa.pub.
 The key fingerprint is:
-SHA256:yd0MxzzCO1Gu5EhCyufgze1WXmCHpcxIvfqGFn2Emd4 Student user für git and ansible workshop
+SHA256:B4ytYCABkw3JNKVTluqcXSSs4M1E9a6DJaDeqJidkZc Der SSH KEy für den Ansible-Workshop
 The key's randomart image is:
 +---[RSA 3072]----+
-|      . ..  o    |
-|   . o . =.O     |
-|    + o o &=B    |
-|   . * = B=%..   |
-|    . + S+Bo+    |
-|       .ooooE    |
-|        o+..     |
-|       .o o      |
-|       . .       |
+|XO==o.           |
+|++** ..+         |
+|o+* = ..+        |
+|.+o+ o.. .       |
+|+ o.....S .      |
+|.+oo+..  .       |
+| oooEo           |
+|oo +  .          |
+|+ o              |
 +----[SHA256]-----+
 ```
 
+Im hier gezeigten Beispiel hat dieser key **keine** passphrase. **Dies ist natürlich im 'Wahren Leben' keine gute Idee, macht es aber hier einfacher.
+
 ### ssh key auf server und workstation kopieren
-Diesen Key müssen wir nun auf server und workstation für die benutzer `root` und `student` freischalten.
+Diesen Key müssen wir nun auf server und workstation für die benutzer `root` und `student` freischalten. Dies geschieht mide dem Befehl `ssh-copy-id`.
 Zuerst für den student:
 ```
-[student@workstation ~]$ ssh-copy-id student@workstation
-The authenticity of host 'workstation (fe80::5054:ff:fe80:d2dc%enp1s0)' can't be established.
-ED25519 key fingerprint is SHA256:nlhHjxx85kikhzW6JilOG8hUOGktByu/Dwu3v2nmnyA.
-This key is not known by any other names
-Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
-/usr/bin/ssh-copy-id: INFO: 2 key(s) remain to be installed -- if you are prompted now it is to install the new keys
-student@workstation's password: 
-
-Number of key(s) added: 2
-
-Now try logging into the machine, with:   "ssh 'student@workstation'"
-and check to make sure that only the key(s) you wanted were added.
-
 [student@workstation ~]$ ssh-copy-id student@server
 The authenticity of host 'server (192.168.238.174)' can't be established.
-ED25519 key fingerprint is SHA256:8BPQfyhV3O+YR2MrXcSp1+OfbDS+cprzns+zge5kpYc.
-This key is not known by any other names
+ECDSA key fingerprint is SHA256:PFZ8jvuycTzUHv1Eb8DhvWyDRo4qBz4lH48wLJY33XQ.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 /usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
 /usr/bin/ssh-copy-id: INFO: 2 key(s) remain to be installed -- if you are prompted now it is to install the new keys
-student@server's password: 
+student@server's password:
 
 Number of key(s) added: 2
 
 Now try logging into the machine, with:   "ssh 'student@server'"
 and check to make sure that only the key(s) you wanted were added.
 ```
-Um den key auch für `root` freizuschalten, müssen wir uns auf dem betreffenden System erst einmal als student anmelden, und danach den bereits für `student` freigeschalteten key auch für root freischalten:
-```
-[student@workstation ~]$ sudo -i
-[sudo] Passwort für student: 
-[root@workstation ~]# mkdir -p ~root/.ssh
-[root@workstation ~]# cat ~student/.ssh/authorized_keys >> ~root/.ssh/authorized_keys
-[root@workstation ~]# 
-Abgemeldet
-[student@workstation ~]$ ssh root@workstation
-Last login: Mon Nov 29 03:44:45 2021 from fe80::5054:ff:fe80:d2dc%enp1s0
-[root@workstation ~]# 
-Abgemeldet
-Connection to workstation closed.
-```
 
-Und noch mal das gleiche auf dem `server`:
-```
-[student@workstation ~]$ ssh student@server
-Last login: Mon Nov 29 03:53:19 2021 from 192.168.238.175
-[student@server ~]$ sudo -i
-[sudo] Passwort für student: 
-[root@server ~]# mkdir -p ~root/.ssh
-[root@server ~]# cat ~student/.ssh/authorized_keys >> ~root/.ssh/authorized_keys
-[root@server ~]# 
-Abgemeldet
-[student@server ~]$ 
-Abgemeldet
-Connection to server closed.
-[student@workstation ~]$ ssh root@server
-Last login: Mon Nov 29 03:50:26 2021 from 192.168.238.175
-[root@server ~]# 
-Abgemeldet
-Connection to server closed.
-```
+Diesen Vorgang wiederholen wir noch drei mal: `ssh-copy-id root@server`, `ssh-copy-id student@workstation ` und `ssh-copy-id root@workstation`.
+
+Zum Testen können wir uns dann mit `ssh root@server` auf den Server anmelden, analog dazu auch als student auf server oder workstation.
 
 ### git repo auf server anlegen
 Jetzt können wir auf dem server als der student-user ein gemeinsam genutztes git repository anlegen:
 ```
-[student@workstation ~]$ ssh student@server
-Last login: Mon Nov 29 03:53:22 2021 from 192.168.238.175
 [student@server ~]$ mkdir ansible-mysql
 [student@server ~]$ cd ansible-mysql/
 [student@server ansible-mysql]$ git init --bare --shared=true .
-Hinweis: Als Name für den initialen Branch wurde 'master' benutzt. Dieser
-Hinweis: Standard-Branchname kann sich ändern. Um den Namen des initialen Branches
-Hinweis: zu konfigurieren, der in allen neuen Repositories verwendet werden soll und
-Hinweis: um diese Warnung zu unterdrücken, führen Sie aus:
-Hinweis: 
-Hinweis:        git config --global init.defaultBranch <Name>
-Hinweis: 
-Hinweis: Häufig gewählte Namen statt 'master' sind 'main', 'trunk' und
-Hinweis: 'development'. Der gerade erstellte Branch kann mit diesem Befehl
-Hinweis: umbenannt werden:
-Hinweis: 
-Hinweis:        git branch -m <Name>
 Leeres verteiltes Git-Repository in /home/student/ansible-mysql/ initialisiert
-[student@server ansible-mysql]$ 
-Abgemeldet
-Connection to server closed.
+[student@server ansible-mysql]$ ls -la
+insgesamt 16
+drwxrwsr-x. 7 student student  119  2. Dez 08:43 .
+drwx------. 4 student student   95  2. Dez 08:42 ..
+drwxrwsr-x. 2 student student    6  2. Dez 08:43 branches
+-rw-rw-r--. 1 student student  126  2. Dez 08:43 config
+-rw-rw-r--. 1 student student   73  2. Dez 08:43 description
+-rw-rw-r--. 1 student student   23  2. Dez 08:43 HEAD
+drwxrwsr-x. 2 student student 4096  2. Dez 08:43 hooks
+drwxrwsr-x. 2 student student   21  2. Dez 08:43 info
+drwxrwsr-x. 4 student student   30  2. Dez 08:43 objects
+drwxrwsr-x. 4 student student   31  2. Dez 08:43 refs
 ```
 
 ### git repo clonen
@@ -444,48 +404,8 @@ server
 workstation
 ```
 ### ein erster Test
-Um zu testen ob das alles in Ordnung ist, können wir ein ansible "ad hoc"-Kommando verwenden, aber erst mal muss ansible überhaupt installiert werden:
+Um zu testen ob das alles in Ordnung ist, können wir ein ansible "ad hoc"-Kommando verwenden.
 
-```
-[student@workstation ansible-mysql]$ sudo dnf install ansible
-[sudo] Passwort für student: 
-Letzte Prüfung auf abgelaufene Metadaten: vor 0:14:40 am Mo 29 Nov 2021 03:48:07 EST.
-Abhängigkeiten sind aufgelöst.
-=============================================================================================================================================
- Package                                   Architecture               Version                              Repository                   Size
-=============================================================================================================================================
-Installieren:
- ansible                                   noarch                     2.9.27-1.fc35                        updates                      15 M
-Abhängigkeiten werden installiert:
- python3-babel                             noarch                     2.9.1-4.fc35                         fedora                      5.8 M
- python3-bcrypt                            x86_64                     3.2.0-1.fc35                         fedora                       43 k
- python3-cryptography                      x86_64                     3.4.7-5.fc35                         fedora                      695 k
- python3-jinja2                            noarch                     3.0.1-2.fc35                         fedora                      529 k
- python3-jmespath                          noarch                     0.10.0-4.fc35                        fedora                       46 k
- python3-markupsafe                        x86_64                     2.0.0-2.fc35                         fedora                       27 k
- python3-ntlm-auth                         noarch                     1.5.0-4.fc35                         fedora                       53 k
- python3-pynacl                            x86_64                     1.4.0-4.fc35                         fedora                      108 k
- python3-pytz                              noarch                     2021.3-1.fc35                        updates                      47 k
- python3-requests_ntlm                     noarch                     1.1.0-16.fc35                        fedora                       18 k
- python3-xmltodict                         noarch                     0.12.0-13.fc35                       fedora                       22 k
- sshpass                                   x86_64                     1.09-2.fc35                          fedora                       27 k
-Schwache Abhängigkeiten werden installiert:
- python3-paramiko                          noarch                     2.7.2-6.fc35                         fedora                      288 k
- python3-pyasn1                            noarch                     0.4.8-7.fc35                         fedora                      134 k
- python3-winrm                             noarch                     0.4.1-4.fc35                         fedora                       80 k
-
-Transaktionsübersicht
-=============================================================================================================================================
-Installieren  16 Pakete
-
-Gesamte Downloadgröße: 23 M
-Installationsgröße: 133 M
-Ist dies in Ordnung? [j/N]: j
-```
-
-Hier mit "j" antworten und ein bisserl abwarten.
-
-Jetzt kann  getestet werden:
 ```
 [student@workstation ansible-mysql]$ ansible --list-hosts all
   hosts (2):
@@ -559,20 +479,219 @@ Date:   Mon Nov 29 04:15:08 2021 -0500
 
 ## Datenbankadministration mit ansible am Beispiel von mysql auf Red Hat Linux
 
+### Was muss alles erledigt werden:
+
+* mysql-pakete müssen installiert werden
+* mysql service muss aktiviert werden
+* mysql port muss auf der firewall durchgelassen werden, wenn gewünscht
+* ein datenbank-user muss angelegt werden
+* 
 ### Welche Ansible-Module braucht man
-user
 package
-mysql
+mysql_*
 service
 firewalld
 
 ### Welche Schritte müssen ausgeführt werden
-user anlegen
-pakete installieren
-dienst aktivieren
-firewall öffnen
-datenbank initialisieren
-dbuser anlegen
-db für den dbuser anlegen
+
+Hinweise:
+* `ansible-doc -l | grep mysql` zeigt alle ansible module, die mit mysql umgehen, danach liest man die entsprechende Dokumentation einfach mit `ansible-doc mysql_user`
+* das `package`-Modul kann mit so ziemlich allen Paketmanagern unter Linux umgehen, es gibt aber auch spezialisierte Module für die einzelnen Paketmanager der verschiedenen Linuxversionen.
+* Wir haben auf den VMs Centos 8.2, dort heisst das Paket für den mysql server `mysql-server` und das Paket mit dem client (zum testen) `mysql`, und der Paketmanager heisst `dnf`.
+* Als Firewall kommt `firewalld` zum Einsatz, also brauchen wir dazu das Ansible-Modul `firewalld`.
+
+
+## Schritt für Schritt-Lösung
+
+Zuerst einmal müssen wir die nötigen pakete installieren, den dienst starten, und auf der Firewall den port öffnen.
+
+Das folgende Playbook erledigt das für uns.
+
+```
+---
+- name: update DNF cache on all hosts
+  hosts: all
+  user: student
+  become: true
+  tasks:
+
+  - name: Update DNF Package repository cache
+    dnf:
+      update_cache: True
+
+- name: install and enable mysqld on server
+  hosts: server
+  user: student
+  become: True
+  tasks:
+
+  - name: Install MySQL server on CentOS 8
+    dnf:
+      name: mariadb-server
+      state: present
+
+  - name: Install MySQL client on CentOS 8
+    dnf:
+      name: mariadb
+      state: present
+
+  - name: Make sure mysqld service is running
+    service:
+      name: mariadb
+      state: started
+      enabled: True
+
+  - name: Install python3-PyMySQL library
+    dnf:
+      name: python3-PyMySQL
+      state: present
+
+- name: install mysql client on workstation
+  hosts: workstation
+  user: student
+  become: true
+  tasks:
+
+  - name: install mysql client
+    dnf:
+      name: mariadb
+      state: present
+
+- name: open mysql firewall port on server
+  hosts: server
+  user: student
+  become: true
+  tasks:
+
+  - name: open firewall port for mysql
+    firewalld:
+      service: mysql
+      state: enabled
+      permanent: yes
+      immediate: yes
+```
+
+Aufgerufen wird es mit `ansible-playbook -kK <dateiname>`. `-kK` teilt ansible dabei mit, uns nach dem sudo passwort und der ssh-passphare zu fragen. Bei verwendung des ssh-agent (oder wie hier im Beispiel oben, eines ssh Schlüssels ohne Passphrase) kann das kleine `k` weggelassen werden.
+
+Unter den meissten Linuxvarianten lässt mariadb / mysql zugriffe als admin direkt nach der Installation erst mal ohne passwort zu.
+Dagegen hilft das zweite Playbook:
+
+```
+---
+- name: configure the database server
+  hosts: server
+  user: student
+  become: trueA
+  vars_files:
+    - vars/main.yml
+  tasks:
+
+  - name: set password for root access
+    mysql_user:
+      login_host: "localhost"
+      login_user: "root"
+      login_password: ""
+      user: "root"
+      password: "{{ mysql_root_password }}"
+      state: present
+```
+
+Hier gibt es zwei Besonderheiten zu beachten:
+* Hier wird die **Idempotez** verletzt - dieses Play funktioniert nur, wenn noch kein Passwort für `root` in der Datenbank gesetzt ist.
+* Es wird eine Variablendatei eingelesen. Diese Datei liegt im Unterordner `vars` und hat den Inhalt:
+  ```
+  mysql_root_password: Sup3rS3cur3
+  mysql_dbuser_password: N0tS0S3cur3
+  ```
+
+Nun können wir endlich den Datenbankuser anlegen, Rechte vergeben, und eine leere datenbank anlegen:
+```
+---
+- name: configure the database server, part two
+  hosts: server
+  user: student
+  become: true
+  vars_files:
+    - vars/main.yml
+  tasks:
+
+  - name: create db user
+    mysql_user:
+      login_host: "localhost"
+      login_user: "root"
+      login_password: "{{ mysql_root_password }}"
+      user: "dbuser"
+      host: "%"
+      priv: "dbuser_%.*:ALL"
+      password: "{{ mysql_dbuser_password }}"
+      state: present
+
+  - name: create a demo database
+    mysql_db:
+      login_host: "localhost"
+      login_user: "root"
+      login_password: "{{ mysql_root_password }}"
+      name: "dbuser_test1"
+      state: present
+```
+
+Wir verwenden hier wieder die gleiche Variablendatei!
+
+## Eleganter ist das mit Rollen
+
+Es geht allerdings viel einfacher: mit einer ansible role, oder Rolle.
+
+### Was ist eine Rolle
+Ansible-roles sind vorgefertigte "pakete" mit plays die man verwenden kann um die eigenen playbooks viel kürzer und übersichtlicher zu gestalten.
+
+Ansible roles findet man auf/mit ansible galaxy, https://galaxy.ansible.com/
+
+Dort (oder mit google) findet sich eine Ansible-Role zum Installieren und konfigurieren eines mysql oder mariadb datenbankservers von Jeff Geerling (Verfasser von "Ansible for DevOps", sehr aktiv auf youtube): https://galaxy.ansible.com/geerlingguy/mysql
+
+### wie installiere ich Rollen
+
+Um eine solche role zu verwenden muss ich die role erst einmal herunterladen und installieren. Dies geschieht mit dem Befehl `ansible-galaxy`:
+
+```
+[root@workstation ~]# ansible-galaxy install geerlingguy.mysql
+- downloading role 'mysql', owned by geerlingguy
+- downloading role from https://github.com/geerlingguy/ansible-role-mysql/archive/3.3.2.tar.gz
+- extracting geerlingguy.mysql to /root/.ansible/roles/geerlingguy.mysql
+- geerlingguy.mysql (3.3.2) was installed successfully
+
+```
+So eine Rolle muss auf dem host installiert sein, auf dem ich hinterher auch das Playbook ausführe - **nicht** auf den Systemen die ich konfigurieren will!
 
 ### Lösung
+
+Damit wird das ganze schon viel übersichtlicher!
+Wir brauchen:
+* eine Variablendatei `vars/role.yml`:
+```
+mysql_root_password: Sup3rS3cur3
+mysql_databases:
+  - name: example_db
+    encoding: latin1
+    collation: latin1_general_ci
+mysql_users:
+  - name: example_user
+    host: "%"
+    password: alm0sts3cure
+    priv: "example_db.*:ALL"
+```
+* ein Playbook `role.yml`
+```
+---
+- name: install and configure mysql the elegant way
+  hosts: server
+  become: yes
+  vars_files:
+    - vars/role.yml
+
+  roles:
+    - { role: geerlingguy.mysql }
+```
+
+...und das ist alles!
+
+Wer beides ausprobieren will, muss zwischen den beiden Varianten allerdings auf dem server die Datenbank stoppen, deinstallieren, und das Datenverzeichnis /var/lib/mysql entfernen.
