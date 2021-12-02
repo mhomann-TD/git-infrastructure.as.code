@@ -38,7 +38,7 @@ Ein Beispiel aus der Welt der Zahlen:
 
 Um das ganze mal in die Welt der Systemadministration zu heben:
 
-`mkdir /tmp/testdir` wird beim ersten Aufruf funktionieren, aber wenn das Verzeixchnis dann existiert, wird jeder weitere Aufruf zu einer Fehlermeldung führen - also **nicht** idempotent.
+`mkdir /tmp/testdir` wird beim ersten Aufruf funktionieren, aber wenn das Verzeichnis dann existiert, wird jeder weitere Aufruf zu einer Fehlermeldung führen - also **nicht** idempotent.
 
 `test -d /tmp/testdir || mkdir /tmp/testdir` wird hingegen bei **jedem** Aufruf ordnungsgemäß funktionieren - also ist diese Form **idempotent**.
 
@@ -60,7 +60,7 @@ Zu guter Letzt benötigt man eine wie auch immer geartete **Versionsverwaltung**
   
 * Puppet: Ein weiteres open source Konfigurationssystem. Auch puppet benötigt einen zentralen Server (den "Puppet master"). Wichtiges Merkmal: Die verschiedenen schritte in puppet-"scripten", den sogenannten Modulen, können, und werden, in beliebiger Reihenfolge ausgeführt werden. **Idempotenz** ist hier **lebenswichtig**.
   
-* Ansible: Das dritte der verbreiteten Konfigurationssysteme. Ansible-Playbooks sind in YAML verfasst, einfach zu lesen, und werden (im Gegensatz zu Puppet) von oebn nach unten abgearbeitet, was den Umgang mit Ansible wesentlich einfacher macht. Ansible benötigt im Gegensatz zu Puppet und Saltstack **keinen** zentralen Server, esgibt aber eine zentralisiert einsetzbare Webapplikation, den "Ansible Tower", der ansible um RBAC (role based access controls), Logging, scheduling, u.v.m. erweitert.
+* Ansible: Das dritte der verbreiteten Konfigurationssysteme. Ansible-Playbooks sind in YAML verfasst, einfach zu lesen, und werden (im Gegensatz zu Puppet) von oben nach unten abgearbeitet, was den Umgang mit Ansible wesentlich einfacher macht. Ansible benötigt im Gegensatz zu Puppet und Saltstack **keinen** zentralen Server, es gibt aber eine zentralisiert einsetzbare Webapplikation, den "Ansible Tower", der Ansible um RBAC (role based access controls), Logging, scheduling, u.v.m. erweitert.
 
 Red Hat Linux unterstützt Puppet und Ansible, wir werden uns im Weiteren mit Ansible befassen.
 
@@ -73,34 +73,32 @@ Wir werden im weiteren auf git näher eingehen.
 
 Ansible ist eine "Systembeschreibungssprache", das bedeutet ich sage was ich will, und Ansible weiss dann "von selber" wie das zu machen ist. ein Beispiel:
 
-`ansible -m package -a 'name=httpd state=latest' -bkK server17`
-
-Heisst in umgangssprachlichem Deutsch:
+`ansible -m package -a 'name=httpd state=latest' -bkK server17` heißt in umgangssprachlichem Deutsch:
 "Liebes Ansible, ich möchte, dass auf Server17 das Paket 'httpd' in der aktuellsten Version installiert ist. Dazu brauchst du das `package` modul, das musst du als root machen, nach den benötigten Passwörtern sollst du mich fragen."
 Und ob Server17 nun ein RHEL (oder ein Abkömmling) ist, wo man das entweder mit yum oder dnf macht, oder ein SLES/openSUSE wo der Paketmanager zypper heisst, oder gar ein debian mit apt-get oder aptitude - das ist vollkommen Wurst, darum kümmert sich Ansible selber. Und auch ob das Paket schon drauf ist, oder in einer älteren Version, oder gar nicht, ist für diesen Befehl egal.
 
 Mit ansible kann man (wie eben gesehen) sogenannte "ad-hoc-befehle" ausführen lassen, oder man schreibt sogenannte "playbooks". Ein Playbook ist eine ganze Abfolge von ansible-modulaufrufen, die nacheinander ausgeführt werden.
 
-### Und was ist mit der idempotenz? 
+### Und was ist mit der Idempotenz? 
 Ansible-befehle sind bis auf wenige Ausnahmen immer idempotent - wenn in dem obigen Beispiel das httpd-paket schon in der aktuellsten Version installiert ist sagt Ansible einfach "Oh. Na dann ist ja alles gut und ich muss nix tun."
 Die wenigen Ausnahmen: alles was man mit dem -raw, dem -command und dem -shell modul macht. Mit diesen drei Ansible-Modulen werden nämlich direkt "native" Befehle auf den Zielsystemen ausgeführt - ohne auf die Ergebnisse zu achten. Somit muss man da dann selber auf die Idempotenz achten... und das kann schon etwas fehleranfällig werden.
 
 ### Ansible-module?
-Ansible basiert auf tausenden von Modulen. In diesen Modulen steckt die eigentliche Logik hinter Ansible. So z.B. das oben schon verwendete "package" modul, was betriebssystemunabhängig Softwarepakete installiert, deinstalliert, und updatet.
-Es gibt zur Zeit über 3300 Module für alle Zwecke, vom einfachen Anlegen von Dateien bis zur Verwaltung meiner AWS-Instanzen, und viele mehr - sogar Windows-systeme und Netzwerkhardware kann mit Ansible gemanagt werden.
+Ansible basiert auf tausenden von Modulen. In diesen Modulen steckt die eigentliche Logik hinter Ansible. So z.B. das oben schon verwendete "package" Modul, was betriebssystemunabhängig Softwarepakete installiert, deinstalliert, und updatet.
+Es gibt zur Zeit über 3300 Module für alle Zwecke, vom einfachen Anlegen von Dateien bis zur Verwaltung meiner AWS-Instanzen, und viele mehr - sogar Windows-Systeme und Netzwerkhardware kann mit Ansible gemanagt werden.
 
 Eine liste aller für meine Ansible-version verfügbaren Module sehe ich mit dem Befehl `ansible-doc -l`. Mit dem gleichen Befehl sehe ich dann auch die Dokumentation für ein Modul, z.B. so: `ansible-doc package` um die Doku für das package-modul zu lesen.
 
 ### Playbooks?
-Ein Ansible-playbook ist im Grunde nichts anderes als ein script, in dem nacheinander verschiedene Module mit Parametern aufgerufen werden.
+Ein Ansible-playbook ist im Grunde nichts anderes als ein Script, in dem nacheinander verschiedene Module mit Parametern aufgerufen werden.
 Playbooks sind in YAML geschrieben ("yet another markup language"). Zu YAML muss ich zwei Dinge wissen:
 
-* YAML ist einfach wie klartext zu lesen (das ist gut)
+* YAML ist einfach wie Klartext zu lesen (das ist gut)
 * YAML ist sehr pingelig was die Einrücktiefe angeht - eine falsch eingerückte Zeile führt zu Fehlermeldungen - aber nicht unbedingt in der betreffenden Zeile sondern ganz wo anders... (Das ist nicht gut)
 
 Für die Problematik mit den Einrückungen gibt es eine relativ einfache Lösung:
-* den `vim` editor nutzen
-* die folgende zeile in `~/.vimrc` eintragen:
+* den `vim` Editor benutzen
+* die folgende Zeile in `~/.vimrc` eintragen:
 
 ```
 autocmd FileType yaml setlocal ai ts=2 sw=2 et cc=3,5,7,9,11
@@ -130,7 +128,7 @@ Zuletzt noch ein Beispiel für ein sehr einfaches Playbook:
 ```
 
 Was genau passiert hier nun?
-Zuerst werden einige Daten definiert: die "zielhosts" sind alle hosts die im Inventory in der Gruppe "test-servers" sind. Der Benutzer für den Zugang ist "nahmed" und alle aktionen sollen dann als root ausgeführt werden (become: true). Danach wird eine Variable definiert, und dann folgen die Tasks und handlers (Ein handler ist ein task, der nur dann ausgeführt wird, wenn er von  irgend einem anderen Task ein "notify" erhalten hat).
+Zuerst werden einige Daten definiert: die "Zielhosts" sind alle Hosts die im Inventory in der Gruppe "test-servers" sind. Der Benutzer für den Zugang ist "nahmed" und alle aktionen sollen dann als root ausgeführt werden (become: true). Danach wird eine Variable definiert, und dann folgen die Tasks und handlers (Ein handler ist ein task, der nur dann ausgeführt wird, wenn er von  irgend einem anderen Task ein "notify" erhalten hat).
 
 Der erste Task stellt sicher, dass das httpd paket in der neuesten Verion installiert ist.
 Der zweite Task kopiert eine Datei, die im gleichen Verzeichnis wie das playbook liegt, an eine bestimmte Stelle auf allen betroffenen Servern.
@@ -138,7 +136,7 @@ Der dritte Task stellt sicher, dass der httpd-dienst beim boot aktiv ist, und sc
 Der handler stellt dann zuletzt sicher, dass der httpd-dienst neu gestartet wird.
 
 ### ...das inventory?
-Ansible benötigt ein "inventory". Das ist im allereinfachsten Fall eine Textdatei, in der Zeile für Zeile die hostnamen aller Systeme aufgelistet sind, mit denen man arbeiten will, aso z.B. so:
+Ansible benötigt ein "inventory". Das ist im allereinfachsten Fall eine Textdatei, in der Zeile für Zeile die Hostnamen aller Systeme aufgelistet sind, mit denen man arbeiten will, also z.B. so:
 ```
 server1.local.net
 server2.local.net
@@ -231,13 +229,13 @@ Aufgerufen wird dieses playbook dann so:
 `ansible-playbook -u root -l zielhost -e upassword=dideldum  ansibleuser.yml`.
 Damit wird der remote-benutzer angelegt, und als passwort das mit "upassword=" übergebene Passwort eingetragen.
 
-Mit den bis hier erfolgten Ausführungen sollte jeder in der Lage sein, dieses Play zu lesen und zu verstehen.
+Mit den bis hier erfolgten Ausführungen sollte man in der Lage sein, dieses Play zu lesen und zumindest in Grundzügen verstehen.
 
 **Die für die Übungen bereitgestellten VMs sind bereits entsprechend vorbereitet.**
 
 ### Zugangsdaten der VMs
 
-Der user für den Benutzerzugriff heisst **`student`** mit dem passwort **`student`**
+Der user für den Benutzerzugriff heißt **`student`** mit dem passwort **`student`**
 
 Das Passwort für den Benutzer **`root`** lautet **`Funk3nGr00v3n123`**
 
@@ -249,16 +247,16 @@ Eine wie auch immer geartete Versionsverwaltung sollte die folgenden Merkmale au
 * Jede Änderung wird mit einer Logmessage gespeichert
 * Dateien können wieder auf frühere Versionen zurückgesetzt werden
 * Die Unterschiede zwischen verschiedenen Versionen können übersichtlich dargestellt werden
-* Bei jeder Änderung wird Uhrzeit, Datum, und der Accont der die Änderung gemacht hat gespeichert.
+* Bei jeder Änderung wird Uhrzeit, Datum, und der Account der die Änderung gemacht hat gespeichert.
 * Viele verschiedene Nutzer können gleichzeitig am gleichen Projekt arbeiten, wobei Konflikte die entstehen wenn mehrere Nutzer die gleiche Datei ändern abgefangen bzw. sauber zusammengeführt werden.
 * Es gibt die Möglichkeit das Versionskontrollsystem über sog. `hooks` in den Workflow der Softwareentwicklung zu integrieren, so kann z.B. das Erstellen von neuen Containerimages automatisiert werden (gut zu sehen auf dockerhub für zahlende Accounts, oder auf quay.io)
 
 
 
 ### Was ist git
-`git` ist eines der verbretitetesten Versionskontrollsysteme dieser Tage. Das kommt wahrscheinlich nicht zuletzt daher, dass einerseits der Linux-Kernel in einem GIT-repository gepflegt wird, und andererseits unter `https://github.com` ein großer öffentlicher GIT-server für jeden der es nutzen will zur Verfügung gestellt wird.
+`git` ist eines der weitestverbreiteten Versionskontrollsysteme dieser Tage. Das kommt wohl nicht zuletzt daher, dass einerseits der Linux-Kernel in einem GIT-repository gepflegt wird, und andererseits unter `https://github.com` ein großer öffentlicher GIT-server für jeden der es nutzen will zur Verfügung gestellt wird.
 
-Git arbeitet mit bis zu vier versxchiedenen Arbeitsbereichen.
+Git arbeitet mit bis zu vier verschiedenen Arbeitsbereichen.
  * central repository
  * local repository
  * staging 
@@ -423,7 +421,7 @@ server | SUCCESS => {
 ### ansible.cfg und inventory ins repo pushen
 Unsere Konfigurationsdatei und das Inventory scheinen ja in Ordnung zu sein, also ab in's Repository damit, aber dafür muss git erst mal für die Logeinträge wissen wer wir sind:
 ```
-[student@workstation ansible-mysql]$ git config --global user.email mhomann@redhat.com
+[student@workstation ansible-mysql]$ git config --global user.email Mathias.Homann@techdata.com
 [student@workstation ansible-mysql]$ git config --global user.name "Mathias Homann"
 
 ```
@@ -497,13 +495,13 @@ firewalld
 Hinweise:
 * `ansible-doc -l | grep mysql` zeigt alle ansible module, die mit mysql umgehen, danach liest man die entsprechende Dokumentation einfach mit `ansible-doc mysql_user`
 * das `package`-Modul kann mit so ziemlich allen Paketmanagern unter Linux umgehen, es gibt aber auch spezialisierte Module für die einzelnen Paketmanager der verschiedenen Linuxversionen.
-* Wir haben auf den VMs Centos 8.2, dort heisst das Paket für den mysql server `mysql-server` und das Paket mit dem client (zum testen) `mysql`, und der Paketmanager heisst `dnf`.
+* Wir haben auf den VMs Centos 8.2, dort heißt das Paket für den mysql server `mariadb-server` und das Paket mit dem client (zum testen) `mariadb`, und der Paketmanager heisst `dnf`.
 * Als Firewall kommt `firewalld` zum Einsatz, also brauchen wir dazu das Ansible-Modul `firewalld`.
 
 
 ## Schritt für Schritt-Lösung
 
-Zuerst einmal müssen wir die nötigen pakete installieren, den dienst starten, und auf der Firewall den port öffnen.
+Zuerst einmal müssen wir die nötigen Pakete installieren, den dienst starten, und auf der Firewall den Port öffnen.
 
 Das folgende Playbook erledigt das für uns.
 
@@ -571,9 +569,9 @@ Das folgende Playbook erledigt das für uns.
       immediate: yes
 ```
 
-Aufgerufen wird es mit `ansible-playbook -kK <dateiname>`. `-kK` teilt ansible dabei mit, uns nach dem sudo passwort und der ssh-passphare zu fragen. Bei verwendung des ssh-agent (oder wie hier im Beispiel oben, eines ssh Schlüssels ohne Passphrase) kann das kleine `k` weggelassen werden.
+Aufgerufen wird es mit `ansible-playbook -kK <dateiname>`. `-kK` teilt ansible dabei mit, uns nach dem sudo passwort und der ssh-passphare zu fragen. Bei Verwendung des ssh-agent (oder wie hier im Beispiel oben, eines ssh Schlüssels ohne Passphrase) kann das kleine `k` weggelassen werden.
 
-Unter den meissten Linuxvarianten lässt mariadb / mysql zugriffe als admin direkt nach der Installation erst mal ohne passwort zu.
+Unter den meisten Linuxvarianten lässt mariadb / mysql zugriffe als admin direkt nach der Installation erst mal ohne passwort zu.
 Dagegen hilft das zweite Playbook:
 
 ```
@@ -581,7 +579,7 @@ Dagegen hilft das zweite Playbook:
 - name: configure the database server
   hosts: server
   user: student
-  become: trueA
+  become: true
   vars_files:
     - vars/main.yml
   tasks:
@@ -597,14 +595,14 @@ Dagegen hilft das zweite Playbook:
 ```
 
 Hier gibt es zwei Besonderheiten zu beachten:
-* Hier wird die **Idempotez** verletzt - dieses Play funktioniert nur, wenn noch kein Passwort für `root` in der Datenbank gesetzt ist.
+* Hier wird die **Idempotenz** verletzt - dieses Play funktioniert nur, wenn noch kein Passwort für `root` in der Datenbank gesetzt ist.
 * Es wird eine Variablendatei eingelesen. Diese Datei liegt im Unterordner `vars` und hat den Inhalt:
   ```
   mysql_root_password: Sup3rS3cur3
   mysql_dbuser_password: N0tS0S3cur3
   ```
 
-Nun können wir endlich den Datenbankuser anlegen, Rechte vergeben, und eine leere datenbank anlegen:
+Nun können wir endlich den Datenbankuser anlegen, Rechte vergeben, und eine leere Datenbank anlegen:
 ```
 ---
 - name: configure the database server, part two
