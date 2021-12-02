@@ -143,6 +143,9 @@ sympy-plots-for-*.tex/
 *.qcow2
 *.vmdk
 
+# Packaged VM appliances
+*.ova
+
 # Generated books
 *.html
 *.pdf
