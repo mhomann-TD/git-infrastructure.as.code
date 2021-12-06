@@ -97,6 +97,7 @@ Playbooks sind in YAML geschrieben ("yet another markup language"). Zu YAML muss
 * YAML ist sehr pingelig was die Einrücktiefe angeht - eine falsch eingerückte Zeile führt zu Fehlermeldungen - aber nicht unbedingt in der betreffenden Zeile sondern ganz wo anders... (Das ist nicht gut)
 
 Für die Problematik mit den Einrückungen gibt es eine relativ einfache Lösung:
+
 * den `vim` Editor benutzen
 * die folgende Zeile in `~/.vimrc` eintragen:
 
@@ -256,7 +257,8 @@ Eine wie auch immer geartete Versionsverwaltung sollte die folgenden Merkmale au
 ### Was ist git
 `git` ist eines der weitestverbreiteten Versionskontrollsysteme dieser Tage. Das kommt wohl nicht zuletzt daher, dass einerseits der Linux-Kernel in einem GIT-repository gepflegt wird, und andererseits unter `https://github.com` ein großer öffentlicher GIT-server für jeden der es nutzen will zur Verfügung gestellt wird.
 
-Git arbeitet mit bis zu vier verschiedenen Arbeitsbereichen.
+Git arbeitet mit bis zu vier verschiedenen Arbeitsbereichen:
+
  * central repository
  * local repository
  * staging 
