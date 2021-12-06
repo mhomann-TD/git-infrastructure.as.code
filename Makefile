@@ -6,6 +6,8 @@ all: books vms
 
 books: README.html STUDENT.html INSTRUCTOR.html
 
+pdf: README.pdf STUDENT.pdf
+
 vms: server.qcow2 workstation.qcow2
 
 vmdk: server.vmdk workstation.vmdk
