@@ -1,0 +1,504 @@
+<h1 id="git---infrastructure-as-code">GIT - Infrastructure as code</h1>
+<h1 id="student-manual">Student manual</h1>
+<h2 id="was-bedeutet-eigentlich-infrastructure-as-code">Was bedeutet eigentlich “Infrastructure as code”?</h2>
+<p>Immer öfter hört man heute den Begriff “Infrastructure as code”, aber was bedeutet das eigentlich?</p>
+<p>Es ist eigentlich ziemlich simpel: “Infrastructure as code” ist nichts anderes als eine neue Art und Weise, an die Konfiguration kompletter IT-Umgebungen heranzugehen. Dabei wird so viel wie möglich in Form von Scripten (im weitesten Sinne des Wortes) implementiert. Dieses bringt uns mehrere Vorteile:</p>
+<ul>
+<li><p>Wiederholbarkeit</p></li>
+<li><p>Fehlerfreiheit</p></li>
+<li><p>Automatisierbarkeit</p></li>
+</ul>
+<p>Wiederholbarkeit bedeutet, dass man den gleichen Prozess immer wieder verwenden kann, und sich darauf verlassen kann dass der Prozess immer gleich abläuft.</p>
+<p>Fehlerfreiheit bedeutet, dass ein Prozess, den man ein mal korrekt implementiert hat, durch seine Wiederholbarkeit sicherstellt, dass keine Fehler auftreten.</p>
+<p>Automatisierbarkeit ist die Kombination dieser Eigenschaften: Einen Prozess, den ich korrekt und wiederholbar implementiert habe, kann ich mit gutem Gewissen automatisch ablaufen lassen.</p>
+<h3 id="idempotenz">Idempotenz</h3>
+<p>Eine wichtige Voraussetzung hier ist die sogenannte <strong>Idempotenz</strong>.</p>
+<p>Idempotenz bedeutet, dass ich einen Prozess beliebig oft wiederholen kann, und garantiert jedesmal das gleiche Ergebnis herauskommt. Ein Beispiel aus der Welt der Zahlen:</p>
+<p><code>x=x+2</code> ist <strong>nicht</strong> idempotent - nach dem ersten Aufruf ist der Wert der Variablen 2, danach 4, dann 6, und so weiter.</p>
+<p><code>x=x*2</code> ist hingegen idempotent - egal wie oft man es ausführt, das Ergebnis ist <strong>immer gleich</strong>.</p>
+<p>Um das ganze mal in die Welt der Systemadministration zu heben:</p>
+<p><code>mkdir /tmp/testdir</code> wird beim ersten Aufruf funktionieren, aber wenn das Verzeichnis dann existiert, wird jeder weitere Aufruf zu einer Fehlermeldung führen - also <strong>nicht</strong> idempotent.</p>
+<p><code>test -d /tmp/testdir || mkdir /tmp/testdir</code> wird hingegen bei <strong>jedem</strong> Aufruf ordnungsgemäß funktionieren - also ist diese Form <strong>idempotent</strong>.</p>
+<h3 id="systemunabhängigkeit">Systemunabhängigkeit</h3>
+<p>Eine weitere wichtige Eigenschaft der verwendeten Skripte ist die <strong>Systemunabhängigkeit</strong>.</p>
+<p>Das bedeutet, dass man in den Skripten beschreibt, welches Ergebnis man wünscht, aber sich nicht darum kümmern muss, wie genau dieses Ergebnis zu erreichen ist - darum kümmern sich die verwendeten Werkzeuge.</p>
+<h3 id="versionsverwaltung">Versionsverwaltung</h3>
+<p>Zu guter Letzt benötigt man eine wie auch immer geartete <strong>Versionsverwaltung</strong> in der die erzeugten Konfigurationsscripte abgelegt werden. Dadurch kann man immer zur letzten als gut bekannten Konfiguration zurückkehren wenn es denn doch einmal nötig sein sollte.</p>
+<h2 id="welche-tools-gibt-es">Welche Tools gibt es</h2>
+<h3 id="automatisierungstools">Automatisierungstools</h3>
+<ul>
+<li><p>Saltstack: Ein open source Konfigurationsmanagement für Server. Setzt einen zentralen Server voraus, der die Aufgaben an die “minions” verteilt. Steht unter der apache-Lizenz. Wurde in 2020 von VMWare aufgekauft, seitdem ist die “offizielle Webseite” ziemlich nutzlos.</p></li>
+<li><p>Puppet: Ein weiteres open source Konfigurationssystem. Auch puppet benötigt einen zentralen Server (den “Puppet master”). Wichtiges Merkmal: Die verschiedenen schritte in puppet-“scripten”, den sogenannten Modulen, können, und werden, in beliebiger Reihenfolge ausgeführt werden. <strong>Idempotenz</strong> ist hier <strong>lebenswichtig</strong>.</p></li>
+<li><p>Ansible: Das dritte der verbreiteten Konfigurationssysteme. Ansible-Playbooks sind in YAML verfasst, einfach zu lesen, und werden (im Gegensatz zu Puppet) von oben nach unten abgearbeitet, was den Umgang mit Ansible wesentlich einfacher macht. Ansible benötigt im Gegensatz zu Puppet und Saltstack <strong>keinen</strong> zentralen Server, es gibt aber eine zentralisiert einsetzbare Webapplikation, den “Ansible Tower”, der Ansible um RBAC (role based access controls), Logging, scheduling, u.v.m. erweitert.</p></li>
+</ul>
+<p>Red Hat Linux unterstützt Puppet und Ansible, wir werden uns im Weiteren mit Ansible befassen.</p>
+<h3 id="versionsverwaltung-1">Versionsverwaltung</h3>
+<p>Versionsverwaltungssoftware gibt es wie Sand am Meer: rcs, cvs, mercurial, subversion, git, um nur die bekanntesten zu nennen. Wir werden im weiteren auf git näher eingehen.</p>
+<h2 id="was-ist-ansible">Was ist Ansible</h2>
+<p>Ansible ist eine “Systembeschreibungssprache”, das bedeutet ich sage was ich will, und Ansible weiss dann “von selber” wie das zu machen ist. ein Beispiel:</p>
+<p><code>ansible -m package -a 'name=httpd state=latest' -bkK server17</code> heißt in umgangssprachlichem Deutsch: “Liebes Ansible, ich möchte, dass auf Server17 das Paket ‘httpd’ in der aktuellsten Version installiert ist. Dazu brauchst du das <code>package</code> modul, das musst du als root machen, nach den benötigten Passwörtern sollst du mich fragen.” Und ob Server17 nun ein RHEL (oder ein Abkömmling) ist, wo man das entweder mit yum oder dnf macht, oder ein SLES/openSUSE wo der Paketmanager zypper heisst, oder gar ein debian mit apt-get oder aptitude - das ist vollkommen Wurst, darum kümmert sich Ansible selber. Und auch ob das Paket schon drauf ist, oder in einer älteren Version, oder gar nicht, ist für diesen Befehl egal.</p>
+<p>Mit ansible kann man (wie eben gesehen) sogenannte “ad-hoc-befehle” ausführen lassen, oder man schreibt sogenannte “playbooks”. Ein Playbook ist eine ganze Abfolge von ansible-modulaufrufen, die nacheinander ausgeführt werden.</p>
+<h3 id="und-was-ist-mit-der-idempotenz">Und was ist mit der Idempotenz?</h3>
+<p>Ansible-befehle sind bis auf wenige Ausnahmen immer idempotent - wenn in dem obigen Beispiel das httpd-paket schon in der aktuellsten Version installiert ist sagt Ansible einfach “Oh. Na dann ist ja alles gut und ich muss nix tun.” Die wenigen Ausnahmen: alles was man mit dem -raw, dem -command und dem -shell modul macht. Mit diesen drei Ansible-Modulen werden nämlich direkt “native” Befehle auf den Zielsystemen ausgeführt - ohne auf die Ergebnisse zu achten. Somit muss man da dann selber auf die Idempotenz achten… und das kann schon etwas fehleranfällig werden.</p>
+<h3 id="ansible-module">Ansible-module?</h3>
+<p>Ansible basiert auf tausenden von Modulen. In diesen Modulen steckt die eigentliche Logik hinter Ansible. So z.B. das oben schon verwendete “package” Modul, was betriebssystemunabhängig Softwarepakete installiert, deinstalliert, und updatet. Es gibt zur Zeit über 3300 Module für alle Zwecke, vom einfachen Anlegen von Dateien bis zur Verwaltung meiner AWS-Instanzen, und viele mehr - sogar Windows-Systeme und Netzwerkhardware kann mit Ansible gemanagt werden.</p>
+<p>Eine liste aller für meine Ansible-version verfügbaren Module sehe ich mit dem Befehl <code>ansible-doc -l</code>. Mit dem gleichen Befehl sehe ich dann auch die Dokumentation für ein Modul, z.B. so: <code>ansible-doc package</code> um die Doku für das package-modul zu lesen.</p>
+<h3 id="playbooks">Playbooks?</h3>
+<p>Ein Ansible-playbook ist im Grunde nichts anderes als ein Script, in dem nacheinander verschiedene Module mit Parametern aufgerufen werden. Playbooks sind in YAML geschrieben (“yet another markup language”). Zu YAML muss ich zwei Dinge wissen:</p>
+<ul>
+<li>YAML ist einfach wie Klartext zu lesen (das ist gut)</li>
+<li>YAML ist sehr pingelig was die Einrücktiefe angeht - eine falsch eingerückte Zeile führt zu Fehlermeldungen - aber nicht unbedingt in der betreffenden Zeile sondern ganz wo anders… (Das ist nicht gut)</li>
+</ul>
+<p>Für die Problematik mit den Einrückungen gibt es eine relativ einfache Lösung:</p>
+<ul>
+<li>den <code>vim</code> Editor benutzen</li>
+<li>die folgende Zeile in <code>~/.vimrc</code> eintragen:</li>
+</ul>
+<pre><code>autocmd FileType yaml setlocal ai ts=2 sw=2 et cc=3,5,7,9,11</code></pre>
+<p>Diese Zeile führt dazu, dass <code>vim</code> bei YAML-Dateien automatisch einrückt, das immer um zwei Leerzeichen mehr (oder weniger) tut, und dazu noch die ersten 5 Einrückstufen in rot markiert. Dieser Trick hat dem Ersteller dieses Dokumentes auch schon viele graue Haare erspart…</p>
+<p>Zuletzt noch ein Beispiel für ein sehr einfaches Playbook:</p>
+<pre><code>- hosts: test-servers
+  remote_user: nahmed
+  become: true
+  vars:
+    project_root: /var/www/html
+  tasks:  
+  - name: Install Apache Webserver
+    yum: pkg=httpd state=latest
+  - name: Place the index file at project root
+    copy: src=index.html dest={{ project_root }}/index.html owner=apache group=apache mode=0644
+  - name: Enable Apache on system reboot
+    service: name=httpd enabled=yes
+    notify: restart apache
+  handlers:
+  - name: restart apache
+    service: name=httpd state=restarted</code></pre>
+<p>Was genau passiert hier nun? Zuerst werden einige Daten definiert: die “Zielhosts” sind alle Hosts die im Inventory in der Gruppe “test-servers” sind. Der Benutzer für den Zugang ist “nahmed” und alle aktionen sollen dann als root ausgeführt werden (become: true). Danach wird eine Variable definiert, und dann folgen die Tasks und handlers (Ein handler ist ein task, der nur dann ausgeführt wird, wenn er von irgend einem anderen Task ein “notify” erhalten hat).</p>
+<p>Der erste Task stellt sicher, dass das httpd paket in der neuesten Verion installiert ist. Der zweite Task kopiert eine Datei, die im gleichen Verzeichnis wie das playbook liegt, an eine bestimmte Stelle auf allen betroffenen Servern. Der dritte Task stellt sicher, dass der httpd-dienst beim boot aktiv ist, und schickt ein notify an den einzigen handler in diesem playbook. Der handler stellt dann zuletzt sicher, dass der httpd-dienst neu gestartet wird.</p>
+<h3 id="das-inventory">…das inventory?</h3>
+<p>Ansible benötigt ein “inventory”. Das ist im allereinfachsten Fall eine Textdatei, in der Zeile für Zeile die Hostnamen aller Systeme aufgelistet sind, mit denen man arbeiten will, also z.B. so:</p>
+<pre><code>server1.local.net
+server2.local.net
+dbserver1.local.net
+dbserver2.local.net
+...</code></pre>
+<h3 id="und-wo-liegt-das-inventory-oder-die-datei-ansible.cfg">Und wo liegt das Inventory? oder: die Datei ansible.cfg</h3>
+<p>Daneben gibt es noch die Datei ansible.cfg, in der (unter Anderem) festgelegt wird, wo genau das Inventory zu finden ist. Jedesmal wenn ich ansible aufrufe, wird an mehreren Stellen nach so einer Datei <code>ansible.cfg</code> gesucht. 1. in <code>/etc/ansible/ansible.cfg</code> 2. in <code>~/.ansible.cfg</code> 3. in <code>./ansible.cfg</code></p>
+<p>Das heisst also: in /etc kann ich (als Administrator) globale Vorgaben für Ansible machen. Als User mache ich die Vorgaben für mich alleine in <code>~/.ansible.cfg</code> festlegen. und dann gibt es zu jedem meiner Ansible-projekte die Möglichkeit eine lokale Datei <code>ansible.cfg</code> anzulegen.</p>
+<p>Ein Beispiel für eine ~/.ansible.cfg:</p>
+<pre><code>[defaults]
+inventory = /home/mathias/.ansible/inventory/
+remote_user = ansible-remote
+private_key_file = /home/mathias/.ansible/id_rsa_ansible</code></pre>
+<p>Was man hier sieht, bedeutet: * es gibt ein default inventory im ordner /home/mathias/.ansible/inventory/ (es werden einfach alle Dateien in dem Ordner der Reihe nach als Inventory-Dateien eingelesen) * Der Benutzer, als der Ansible sich per ssh an den Zielsystemen anmeldet, heisst <code>ansible-remote</code> * Der ssh-key für den Zugang liegt in <code>/home/mathias/.ansible/id_rsa_ansible</code></p>
+<h3 id="vorbereitungen-für-ansible">Vorbereitungen für Ansible:</h3>
+<p>Aus dem bis hier gesagten ergeben sich folgende Arbeiten, um einen (neuen) REchner für Remote-Administration mit Ansible einzurichten:</p>
+<ol type="1">
+<li>den Remote-User anlegen</li>
+<li>den Remote-User für <code>sudo</code> freischalten</li>
+<li>den für Ansible verwendeten ssh-key im Benutzeraccount des ansible-remote-users eintragen.</li>
+</ol>
+<p>Und das kann man dann natürlich mit ansible machen:</p>
+<pre><code>---
+- name: create the remote user for ansible and awx
+  hosts: all
+
+  tasks:
+
+  - name: create ansible user
+    user:
+      name:         ansible-remote
+      system:       yes
+      state:        present
+      password:     &quot;{{ upassword | password_hash(&#39;sha512&#39;) }}&quot;
+      create_home:  yes
+      expires:      -1
+
+  - name: install ssh authorized key for ansible-remote account
+    authorized_key:
+      comment: ansible-remote key for ansible and awx
+      exclusive: true
+      key: &quot;ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDOyicC4KQN3yxW7qI5fC1wLra05vCJNjcPhv5b9unPZxyIpageykqWeShpNYL4P8zos3pYkrF5U23ENwXTOIC/YTIOJSrOcPhoT5v4mzRITc8b5yrRgtoi7op0IiO4grtK68jRyljgzU2x8ALlaK1RgfVDf8haXpZpc/h9mKq6dktfOunawtvV8lwxO4XsExvWCe+nBLybWXU3rTYEdpoSZOIhTReX7iHSufixuqHqIsuf16iapGb/5zm0OCjR4+cfMXKpIlrLGtzQvyjlE5iBEeUIWuEx8L6vrBUhS+Ut3bwgEJA6ycQNsuhbz+CW/rnot+yi18F+B6H4a9rRUijD new ssh key for ansible-remote for ansible and awx&quot;
+      state: present
+      user: ansible-remote
+
+  - name: comment out &quot;targetpw&quot; in sudoers
+    replace:
+      path: /etc/sudoers
+      regexp: &#39;(^Defaults targetpw)&#39;
+      replace: &#39;## \1&#39;
+      validate: /usr/sbin/visudo -cf %s
+
+  - name: comment out blanket ALL ALL in sudoers
+    replace:
+      path: /etc/sudoers
+      regexp: &#39;(^ALL.*$)&#39;
+      replace: &#39;## \1&#39;
+      validate: /usr/sbin/visudo -cf %s
+
+  - name: install sudo rule for ansible-remote user
+    copy:
+      dest: /etc/sudoers.d/ansible-remote
+      content: &quot;ansible-remote ALL=(ALL) ALL&quot;
+      mode: 0640
+      group: root
+      owner: root
+      validate: /usr/sbin/visudo -cf %s</code></pre>
+<p>Aufgerufen wird dieses playbook dann so: <code>ansible-playbook -u root -l zielhost -e upassword=dideldum  ansibleuser.yml</code>. Damit wird der remote-benutzer angelegt, und als passwort das mit “upassword=” übergebene Passwort eingetragen.</p>
+<p>Mit den bis hier erfolgten Ausführungen sollte man in der Lage sein, dieses Play zu lesen und zumindest in Grundzügen verstehen.</p>
+<p><strong>Die für die Übungen bereitgestellten VMs sind bereits entsprechend vorbereitet.</strong></p>
+<h3 id="zugangsdaten-der-vms">Zugangsdaten der VMs</h3>
+<p>Der user für den Benutzerzugriff heißt <strong><code>student</code></strong> mit dem passwort <strong><code>student</code></strong></p>
+<p>Das Passwort für den Benutzer <strong><code>root</code></strong> lautet <strong><code>Funk3nGr00v3n123</code></strong></p>
+<h2 id="versionsverwaltung-mit-git">Versionsverwaltung mit git</h2>
+<p>Eine wie auch immer geartete Versionsverwaltung sollte die folgenden Merkmale aufweisen:</p>
+<ul>
+<li>Jede Änderung wird mit einer Logmessage gespeichert</li>
+<li>Dateien können wieder auf frühere Versionen zurückgesetzt werden</li>
+<li>Die Unterschiede zwischen verschiedenen Versionen können übersichtlich dargestellt werden</li>
+<li>Bei jeder Änderung wird Uhrzeit, Datum, und der Account der die Änderung gemacht hat gespeichert.</li>
+<li>Viele verschiedene Nutzer können gleichzeitig am gleichen Projekt arbeiten, wobei Konflikte die entstehen wenn mehrere Nutzer die gleiche Datei ändern abgefangen bzw. sauber zusammengeführt werden.</li>
+<li>Es gibt die Möglichkeit das Versionskontrollsystem über sog. <code>hooks</code> in den Workflow der Softwareentwicklung zu integrieren, so kann z.B. das Erstellen von neuen Containerimages automatisiert werden (gut zu sehen auf dockerhub für zahlende Accounts, oder auf quay.io)</li>
+</ul>
+<h3 id="was-ist-git">Was ist git</h3>
+<p><code>git</code> ist eines der weitestverbreiteten Versionskontrollsysteme dieser Tage. Das kommt wohl nicht zuletzt daher, dass einerseits der Linux-Kernel in einem GIT-repository gepflegt wird, und andererseits unter <code>https://github.com</code> ein großer öffentlicher GIT-server für jeden der es nutzen will zur Verfügung gestellt wird.</p>
+<p>Git arbeitet mit bis zu vier verschiedenen Arbeitsbereichen:</p>
+<ul>
+<li>central repository</li>
+<li>local repository</li>
+<li>staging</li>
+<li>working tree</li>
+</ul>
+<p>Das “central repository” liegt üblicherweise auf einem zentralen Server. Das kann der bereits erwähnte Dienst github.com sein, man kann aber auch sehr einfach im lokalen Netz einen eigenen zentralen git server aufsetzen, wie wir noch sehen werden. Dieses “central repository” bezeichnet man gerne als den <strong>upstream</strong> eines Projektes.</p>
+<p>Das “local repository” ist die lokal ausgecheckte Kopie eines upstreams.</p>
+<p>Innerhalb des “local repositories” gibt es zwei Bereiche: die “staging area” in die alle Änderungen eingetragen sind, die <strong>noch nicht committed</strong> sind, und den “working tree”, d.H. die regulären Dateien im Dateisystem.</p>
+<h3 id="wie-benutze-ich-git">Wie benutze ich git</h3>
+<p>Um mit git zu arbeiten, folge ich einem einfachen Zyklus: <strong>change, stage, commit, push, repeat</strong></p>
+<p>Zuerst wird ein repository angelegt. Das geschieht entweder lokal oder auf einem zentralen server mit <code>git init</code>. Dabei werden auf einem zentralen server noch die parameter <code>--bare --shared=true</code> angegeben.</p>
+<p>Alternativ dazu kann man auch ein bereits existierendes Repository von einem zentralen server kopieren (“clonen”): <code>git clone REPOURL</code></p>
+<p>Nun macht man Änderungen. Wenn man einen Zwischenstand im Repository ablegen will, fügt man die geänderten Dateien mit <code>git add DATEINAME</code> zum staging-Bereich hinzu (Dies gilt auch für neuangelegte Dateien).</p>
+<p>Um den im staging abgelegten Stand ins Repository zu schreiben, verwendet man <code>git commit</code>, wobei die commit-message mit <code>-m "message"</code> gleich übergeben werden kann.</p>
+<p>Zuletzt kann man alle im lokalen Repository abgelegten Änderungen mit <code>git push</code> ins zentrale Repository hochladen.</p>
+<h2 id="vorbereitende-aufgaben">Vorbereitende Aufgaben</h2>
+<h3 id="die-lab-umgebung">Die Lab-Umgebung</h3>
+<p>Für jeden Teilnehmer des Workshops stehen zwei separate VMs zur Verfügung, auf denen es einen Benutzer “student” mit dem Passwort “student” gibt. Die VMs haben für alle Teilnehmer die gleichen hostnamen, <code>server</code> und <code>workstation</code>. Auf der Workstation ist eine graphische Benutzeroberfläche eingerichtet, die ggf. erst an die Sprach- und Tastaturpräferenzen des Benutzers angepasst werden muss. Das Kontrollzentrum des verwendeten DE ist selbsterklärend.</p>
+<h3 id="ssh-key-anlegen">ssh key anlegen</h3>
+<p>Öffne eine Kommandozeile auf der Workstation-VM, und erzeuge einen ssh-key mit dem Befehl <code>ssh-add</code>:</p>
+<pre><code>Generating public/private rsa key pair.
+Enter file in which to save the key (/home/student/.ssh/id_rsa): 
+Created directory &#39;/home/student/.ssh&#39;.
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/student/.ssh/id_rsa.
+Your public key has been saved in /home/student/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:B4ytYCABkw3JNKVTluqcXSSs4M1E9a6DJaDeqJidkZc Der SSH KEy für den Ansible-Workshop
+The key&#39;s randomart image is:
++---[RSA 3072]----+
+|XO==o.           |
+|++** ..+         |
+|o+* = ..+        |
+|.+o+ o.. .       |
+|+ o.....S .      |
+|.+oo+..  .       |
+| oooEo           |
+|oo +  .          |
+|+ o              |
++----[SHA256]-----+</code></pre>
+<p>Im hier gezeigten Beispiel hat dieser key <strong>keine</strong> passphrase. **Dies ist natürlich im ‘Wahren Leben’ keine gute Idee, macht es aber hier einfacher.</p>
+<h3 id="ssh-key-auf-server-und-workstation-kopieren">ssh key auf server und workstation kopieren</h3>
+<p>Diesen Key müssen wir nun auf server und workstation für die benutzer <code>root</code> und <code>student</code> freischalten. Dies geschieht mide dem Befehl <code>ssh-copy-id</code>. Zuerst für den student:</p>
+<pre><code>[student@workstation ~]$ ssh-copy-id student@server
+The authenticity of host &#39;server (192.168.238.174)&#39; can&#39;t be established.
+ECDSA key fingerprint is SHA256:PFZ8jvuycTzUHv1Eb8DhvWyDRo4qBz4lH48wLJY33XQ.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 2 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+student@server&#39;s password:
+
+Number of key(s) added: 2
+
+Now try logging into the machine, with:   &quot;ssh &#39;student@server&#39;&quot;
+and check to make sure that only the key(s) you wanted were added.</code></pre>
+<p>Diesen Vorgang wiederholen wir noch drei mal: <code>ssh-copy-id root@server</code>, <code>ssh-copy-id student@workstation</code> und <code>ssh-copy-id root@workstation</code>.</p>
+<p>Zum Testen können wir uns dann mit <code>ssh root@server</code> auf den Server anmelden, analog dazu auch als student auf server oder workstation.</p>
+<h3 id="git-repo-auf-server-anlegen">git repo auf server anlegen</h3>
+<p>Jetzt können wir auf dem server als der student-user ein gemeinsam genutztes git repository anlegen:</p>
+<pre><code>[student@server ~]$ mkdir ansible-mysql
+[student@server ~]$ cd ansible-mysql/
+[student@server ansible-mysql]$ git init --bare --shared=true .
+Leeres verteiltes Git-Repository in /home/student/ansible-mysql/ initialisiert
+[student@server ansible-mysql]$ ls -la
+insgesamt 16
+drwxrwsr-x. 7 student student  119  2. Dez 08:43 .
+drwx------. 4 student student   95  2. Dez 08:42 ..
+drwxrwsr-x. 2 student student    6  2. Dez 08:43 branches
+-rw-rw-r--. 1 student student  126  2. Dez 08:43 config
+-rw-rw-r--. 1 student student   73  2. Dez 08:43 description
+-rw-rw-r--. 1 student student   23  2. Dez 08:43 HEAD
+drwxrwsr-x. 2 student student 4096  2. Dez 08:43 hooks
+drwxrwsr-x. 2 student student   21  2. Dez 08:43 info
+drwxrwsr-x. 4 student student   30  2. Dez 08:43 objects
+drwxrwsr-x. 4 student student   31  2. Dez 08:43 refs</code></pre>
+<h3 id="git-repo-clonen">git repo clonen</h3>
+<p>Dieses repository clonen wir auf die Workstation:</p>
+<pre><code>[student@workstation ~]$ git clone git+ssh://student@server/home/student/ansible-mysql
+Klone nach &#39;ansible-mysql&#39; ...
+warning: Sie scheinen ein leeres Repository geklont zu haben.
+[student@workstation ~]$ cd ansible-mysql/
+[student@workstation ansible-mysql]$ ls -la
+insgesamt 4
+drwxr-xr-x.  3 student student   18 29. Nov 03:57 .
+drwx------. 16 student student 4096 29. Nov 03:57 ..
+drwxr-xr-x.  7 student student  119 29. Nov 03:57 .git</code></pre>
+<h3 id="ansible.cfg-und-inventory-anlegen">ansible.cfg und inventory anlegen</h3>
+<p>Jetzt können wir eine Konfigurationsdatei und ein Inventory für ansible anlegen:</p>
+<pre><code>[student@workstation ~]$ cd ~/ansible-mysql/
+[student@workstation ansible-mysql]$ vim ansible.cfg
+[student@workstation ansible-mysql]$ cat ansible.cfg 
+[defaults]
+inventory = ./inventory/
+remote-user = student
+
+[privilege_escalation]
+become = False
+become_method = sudo
+become_user = root
+become_ask_pass = False
+</code></pre>
+<pre><code>[student@workstation ansible-mysql]$ mkdir ./inventory/
+[student@workstation ansible-mysql]$ vim ./inventory/000-hosts
+[student@workstation ansible-mysql]$ cat ./inventory/000-hosts 
+server
+workstation</code></pre>
+<h3 id="ein-erster-test">ein erster Test</h3>
+<p>Um zu testen ob das alles in Ordnung ist, können wir ein ansible “ad hoc”-Kommando verwenden.</p>
+<pre><code>[student@workstation ansible-mysql]$ ansible --list-hosts all
+  hosts (2):
+    server
+    workstation
+[student@workstation ansible-mysql]$ ansible -m ping server
+server | SUCCESS =&gt; {
+    &quot;ansible_facts&quot;: {
+        &quot;discovered_interpreter_python&quot;: &quot;/usr/bin/python3&quot;
+    },
+    &quot;changed&quot;: false,
+    &quot;ping&quot;: &quot;pong&quot;
+}</code></pre>
+<h3 id="ansible.cfg-und-inventory-ins-repo-pushen">ansible.cfg und inventory ins repo pushen</h3>
+<p>Unsere Konfigurationsdatei und das Inventory scheinen ja in Ordnung zu sein, also ab in’s Repository damit, aber dafür muss git erst mal für die Logeinträge wissen wer wir sind:</p>
+<pre><code>[student@workstation ansible-mysql]$ git config --global user.email Mathias.Homann@techdata.com
+[student@workstation ansible-mysql]$ git config --global user.name &quot;Mathias Homann&quot;
+</code></pre>
+<p>Hier setzt man natürlich den eigenen Namen ein, und die passende Email-Adresse. Wenn man das <code>--global</code> weglässt, gilt diese Information nur für die lokale repo-kopie in der man gerade arbeitet.</p>
+<p>Jetzt können wir unsere Änderungen speichern:</p>
+<pre><code>[student@workstation ansible-mysql]$ git status
+Auf Branch master
+
+Noch keine Commits
+
+Unversionierte Dateien:
+  (benutzen Sie &quot;git add &lt;Datei&gt;...&quot;, um die Änderungen zum Commit vorzumerken)
+        ansible.cfg
+        inventory/
+
+nichts zum Commit vorgemerkt, aber es gibt unversionierte Dateien
+(benutzen Sie &quot;git add&quot; zum Versionieren)
+[student@workstation ansible-mysql]$ git add ansible.cfg 
+[student@workstation ansible-mysql]$ git commit -m &quot;ansible configuration file&quot;
+[master (Root-Commit) 0688255] ansible configuration file
+ 1 file changed, 10 insertions(+)
+ create mode 100644 ansible.cfg
+[student@workstation ansible-mysql]$ git add inventory/
+[student@workstation ansible-mysql]$ git commit -m &quot;ansible inventory&quot;
+[master 29c7e81] ansible inventory
+ 1 file changed, 3 insertions(+)
+ create mode 100644 inventory/000-hosts
+[student@workstation ansible-mysql]$ git push
+Objekte aufzählen: 7, fertig.
+Zähle Objekte: 100% (7/7), fertig.
+Delta-Kompression verwendet bis zu 2 Threads.
+Komprimiere Objekte: 100% (4/4), fertig.
+Schreibe Objekte: 100% (7/7), 658 Bytes | 658.00 KiB/s, fertig.
+Gesamt 7 (Delta 0), Wiederverwendet 0 (Delta 0), Pack wiederverwendet 0
+To git+ssh://server/home/student/ansible-mysql
+ * [new branch]      master -&gt; master
+[student@workstation ansible-mysql]$ git log
+commit 29c7e81c23d582ee7ad8fe0a5665dfe793681907 (HEAD -&gt; master, origin/master)
+Author: Mathias Homann &lt;mhomann@redhat.com&gt;
+Date:   Mon Nov 29 04:15:26 2021 -0500
+
+    ansible inventory
+
+commit 06882552e8bfd56e4e3228dec0bc7131c7dbd6c5
+Author: Mathias Homann &lt;mhomann@redhat.com&gt;
+Date:   Mon Nov 29 04:15:08 2021 -0500
+
+    ansible configuration file
+[student@workstation ansible-mysql]$</code></pre>
+<h2 id="datenbankadministration-mit-ansible-am-beispiel-von-mysql-auf-red-hat-linux">Datenbankadministration mit ansible am Beispiel von mysql auf Red Hat Linux</h2>
+<h3 id="was-muss-alles-erledigt-werden">Was muss alles erledigt werden:</h3>
+<ul>
+<li>mysql-pakete müssen installiert werden</li>
+<li>mysql service muss aktiviert werden</li>
+<li>mysql port muss auf der firewall durchgelassen werden, wenn gewünscht</li>
+<li>ein datenbank-user muss angelegt werden</li>
+<li><h3 id="welche-ansible-module-braucht-man">Welche Ansible-Module braucht man</h3>
+package mysql_* service firewalld</li>
+</ul>
+<h3 id="welche-schritte-müssen-ausgeführt-werden">Welche Schritte müssen ausgeführt werden</h3>
+<p>Hinweise: * <code>ansible-doc -l | grep mysql</code> zeigt alle ansible module, die mit mysql umgehen, danach liest man die entsprechende Dokumentation einfach mit <code>ansible-doc mysql_user</code> * das <code>package</code>-Modul kann mit so ziemlich allen Paketmanagern unter Linux umgehen, es gibt aber auch spezialisierte Module für die einzelnen Paketmanager der verschiedenen Linuxversionen. * Wir haben auf den VMs Centos 8.2, dort heißt das Paket für den mysql server <code>mariadb-server</code> und das Paket mit dem client (zum testen) <code>mariadb</code>, und der Paketmanager heisst <code>dnf</code>. * Als Firewall kommt <code>firewalld</code> zum Einsatz, also brauchen wir dazu das Ansible-Modul <code>firewalld</code>.</p>
+<h2 id="schritt-für-schritt-lösung">Schritt für Schritt-Lösung</h2>
+<p>Zuerst einmal müssen wir die nötigen Pakete installieren, den dienst starten, und auf der Firewall den Port öffnen.</p>
+<p>Das folgende Playbook erledigt das für uns.</p>
+<pre><code>---
+- name: update DNF cache on all hosts
+  hosts: all
+  user: student
+  become: true
+  tasks:
+
+  - name: Update DNF Package repository cache
+    dnf:
+      update_cache: True
+
+- name: install and enable mysqld on server
+  hosts: server
+  user: student
+  become: True
+  tasks:
+
+  - name: Install MySQL server on CentOS 8
+    dnf:
+      name: mariadb-server
+      state: present
+
+  - name: Install MySQL client on CentOS 8
+    dnf:
+      name: mariadb
+      state: present
+
+  - name: Make sure mysqld service is running
+    service:
+      name: mariadb
+      state: started
+      enabled: True
+
+  - name: Install python3-PyMySQL library
+    dnf:
+      name: python3-PyMySQL
+      state: present
+
+- name: install mysql client on workstation
+  hosts: workstation
+  user: student
+  become: true
+  tasks:
+
+  - name: install mysql client
+    dnf:
+      name: mariadb
+      state: present
+
+- name: open mysql firewall port on server
+  hosts: server
+  user: student
+  become: true
+  tasks:
+
+  - name: open firewall port for mysql
+    firewalld:
+      service: mysql
+      state: enabled
+      permanent: yes
+      immediate: yes</code></pre>
+<p>Aufgerufen wird es mit <code>ansible-playbook -kK &lt;dateiname&gt;</code>. <code>-kK</code> teilt ansible dabei mit, uns nach dem sudo passwort und der ssh-passphare zu fragen. Bei Verwendung des ssh-agent (oder wie hier im Beispiel oben, eines ssh Schlüssels ohne Passphrase) kann das kleine <code>k</code> weggelassen werden.</p>
+<p>Unter den meisten Linuxvarianten lässt mariadb / mysql zugriffe als admin direkt nach der Installation erst mal ohne passwort zu. Dagegen hilft das zweite Playbook:</p>
+<pre><code>---
+- name: configure the database server
+  hosts: server
+  user: student
+  become: true
+  vars_files:
+    - vars/main.yml
+  tasks:
+
+  - name: set password for root access
+    mysql_user:
+      login_host: &quot;localhost&quot;
+      login_user: &quot;root&quot;
+      login_password: &quot;&quot;
+      user: &quot;root&quot;
+      password: &quot;{{ mysql_root_password }}&quot;
+      state: present</code></pre>
+<p>Hier gibt es zwei Besonderheiten zu beachten: * Hier wird die <strong>Idempotenz</strong> verletzt - dieses Play funktioniert nur, wenn noch kein Passwort für <code>root</code> in der Datenbank gesetzt ist. * Es wird eine Variablendatei eingelesen. Diese Datei liegt im Unterordner <code>vars</code> und hat den Inhalt: <code>mysql_root_password: Sup3rS3cur3   mysql_dbuser_password: N0tS0S3cur3</code></p>
+<p>Nun können wir endlich den Datenbankuser anlegen, Rechte vergeben, und eine leere Datenbank anlegen:</p>
+<pre><code>---
+- name: configure the database server, part two
+  hosts: server
+  user: student
+  become: true
+  vars_files:
+    - vars/main.yml
+  tasks:
+
+  - name: create db user
+    mysql_user:
+      login_host: &quot;localhost&quot;
+      login_user: &quot;root&quot;
+      login_password: &quot;{{ mysql_root_password }}&quot;
+      user: &quot;dbuser&quot;
+      host: &quot;%&quot;
+      priv: &quot;dbuser_%.*:ALL&quot;
+      password: &quot;{{ mysql_dbuser_password }}&quot;
+      state: present
+
+  - name: create a demo database
+    mysql_db:
+      login_host: &quot;localhost&quot;
+      login_user: &quot;root&quot;
+      login_password: &quot;{{ mysql_root_password }}&quot;
+      name: &quot;dbuser_test1&quot;
+      state: present</code></pre>
+<p>Wir verwenden hier wieder die gleiche Variablendatei!</p>
+<h2 id="eleganter-ist-das-mit-rollen">Eleganter ist das mit Rollen</h2>
+<p>Es geht allerdings viel einfacher: mit einer ansible role, oder Rolle.</p>
+<h3 id="was-ist-eine-rolle">Was ist eine Rolle</h3>
+<p>Ansible-roles sind vorgefertigte “pakete” mit plays die man verwenden kann um die eigenen playbooks viel kürzer und übersichtlicher zu gestalten.</p>
+<p>Ansible roles findet man auf/mit ansible galaxy, https://galaxy.ansible.com/</p>
+<p>Dort (oder mit google) findet sich eine Ansible-Role zum Installieren und konfigurieren eines mysql oder mariadb datenbankservers von Jeff Geerling (Verfasser von “Ansible for DevOps”, sehr aktiv auf youtube): https://galaxy.ansible.com/geerlingguy/mysql</p>
+<h3 id="wie-installiere-ich-rollen">wie installiere ich Rollen</h3>
+<p>Um eine solche role zu verwenden muss ich die role erst einmal herunterladen und installieren. Dies geschieht mit dem Befehl <code>ansible-galaxy</code>:</p>
+<pre><code>[root@workstation ~]# ansible-galaxy install geerlingguy.mysql
+- downloading role &#39;mysql&#39;, owned by geerlingguy
+- downloading role from https://github.com/geerlingguy/ansible-role-mysql/archive/3.3.2.tar.gz
+- extracting geerlingguy.mysql to /root/.ansible/roles/geerlingguy.mysql
+- geerlingguy.mysql (3.3.2) was installed successfully
+</code></pre>
+<p>So eine Rolle muss auf dem host installiert sein, auf dem ich hinterher auch das Playbook ausführe - <strong>nicht</strong> auf den Systemen die ich konfigurieren will!</p>
+<h3 id="lösung">Lösung</h3>
+<p>Damit wird das ganze schon viel übersichtlicher! Wir brauchen: * eine Variablendatei <code>vars/role.yml</code>:</p>
+<pre><code>mysql_root_password: Sup3rS3cur3
+mysql_databases:
+  - name: example_db
+    encoding: latin1
+    collation: latin1_general_ci
+mysql_users:
+  - name: example_user
+    host: &quot;%&quot;
+    password: alm0sts3cure
+    priv: &quot;example_db.*:ALL&quot;</code></pre>
+<ul>
+<li>ein Playbook <code>role.yml</code></li>
+</ul>
+<pre><code>---
+- name: install and configure mysql the elegant way
+  hosts: server
+  become: yes
+  vars_files:
+    - vars/role.yml
+
+  roles:
+    - { role: geerlingguy.mysql }</code></pre>
+<p>…und das ist alles!</p>
+<p>Wer beides ausprobieren will, muss zwischen den beiden Varianten allerdings auf dem server die Datenbank stoppen, deinstallieren, und das Datenverzeichnis /var/lib/mysql entfernen.</p>
